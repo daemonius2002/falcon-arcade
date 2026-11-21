@@ -1,6 +1,6 @@
-# Falcon Arcade v0.1.1
+# Falcon Arcade v0.2.0
 
-Pixel games platform: 6 categories, 30 games planned, 11 playable.
+Pixel games platform: 6 categories, 30 games, all playable.
 
 - `public/` - the whole site (static HTML, CSS, JS, PNG)
 - `server.js` - tiny Node server with no dependencies; serves `public/` on `$PORT` (default 3000)

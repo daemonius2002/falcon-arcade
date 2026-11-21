@@ -1,7 +1,7 @@
 /* Falcon Arcade — platform shell + tiny pixel game engine */
 (function () {
 'use strict';
-const VER = 'v0.1';
+const VER = 'v0.2';
 const $ = id => document.getElementById(id);
 const IC = {
   shooters: 'M5 1h2v3h1v2h2v2h1v2H8v1H4v-1H1V8h1V6h2V4h1z',
