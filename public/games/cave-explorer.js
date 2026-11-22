@@ -1,6 +1,6 @@
 /* Cave Explorer v0.4 — eight dark caves: find the key, grab the treasure, reach the door. */
 Arcade.game('cave-explorer', { w: 240, h: 240, pad: 'dpad',
-help: 'Escape 8 dark caves! Your lamp only shows what is near. Hold an arrow key or the pad to walk (or swipe / tap the cave to keep walking, tap yourself to stop). Find the golden key, then the door. Gems, rubies and the treasure chest give points, and a quick escape gives a bonus. From cave 2 your lamp burns down: grab oil flasks. Glowing eyes in the dark are bats and slimes. Later caves add pop-up spikes and a red bat that hunts you. Hearts give a life back.',
+help: 'Escape 8 dark caves! Your lamp only shows what is near. Hold an arrow key or the pad to walk (or swipe / tap the cave to keep walking, tap yourself to stop). Find the golden key, then the door. Gems, rubies and the treasure chest give points; the gem counter shows how many are left. A quick escape gives a bonus. From cave 2 your lamp burns down: grab oil flasks. Glowing eyes in the dark are bats and slimes. Later caves add pop-up spikes and a red bat that hunts you. Hearts give a life back.',
 init(A) {
   const K = Art, N = 15, T = 16, LAST = 8, ID = 'cave-explorer:';
   const DIRS = [{ x: 1, y: 0, n: 'right' }, { x: -1, y: 0, n: 'left' }, { x: 0, y: 1, n: 'down' }, { x: 0, y: -1, n: 'up' }];
@@ -27,7 +27,7 @@ init(A) {
   /* ---------- helpers ---------- */
   const open = (x, y) => x >= 0 && y >= 0 && x < N && y < N && m[y][x] === 0;
   const lamp = () => 2.2 + 1.9 * oil;
-  const info = () => A.info('CAVE ' + lvl + ' OF ' + LAST + '   GEMS ' + (gemsAll - gemsN) + ' OF ' + gemsAll);
+  const info = () => A.info('CAVE ' + lvl + '/' + LAST);
   const say = (t, s, d) => { msg = t; sub = s || ''; msgT = d || 2.2; };
   const pop = (x, y, s) => pops.push({ x: x * T + 8, y: y * T + 2, s, t: .9 });
   const score = (n, x, y) => { A.add(n); pop(x, y, '+' + n); };
@@ -55,7 +55,7 @@ init(A) {
     const put = (t, n, min) => { for (let i = 0; i < n; i++) items.push(Object.assign(take(min), { t })); };
     put('gem', 6, 2); if (lvl > 1) { put('ruby', lvl > 5 ? 2 : 1, 6); put('oil', 2, 4); } if (lvl > 2 && lvl % 2) put('heart', 1, 6);
     gemsAll = gemsN = items.filter(i => i.t === 'gem' || i.t === 'ruby').length;
-    foes = []; const foe = (t, n, sp) => { for (let i = 0; i < n; i++) foes.push(Object.assign(take(8), { t, sp, dx: 0, dy: 0, p: 0 })); };
+    foes = []; const foe = (t, n, sp) => { for (let i = 0; i < n; i++) foes.push(Object.assign(take(8), { t, sp: sp * A.rnd(.88, 1.1), dx: 0, dy: 0, p: 0 })); };
     foe('bat', 1 + (lvl >> 1), 2 + lvl * .15); if (lvl > 1) foe('slime', lvl > 4 ? 2 : 1, 1.5); if (lvl > 3) foe('hunt', lvl >= LAST ? 2 : 1, 2.3 + lvl * .1);
     spikes = []; const sp = []; for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) if ((x + y) % 2 && open(x, y) && ds[y * N + x] > 3) sp.push({ x, y, o: A.rnd(0, 2.6) });
     for (let i = Math.min(6, lvl - 2); i > 0 && sp.length; i--) spikes.push(sp.splice(A.ri(0, sp.length - 1), 1)[0]);
@@ -63,7 +63,7 @@ init(A) {
     paint(); reveal(); info(); say('CAVE ' + lvl, NEWS[lvl - 1]); }
 
   /* the cave itself is painted once per level */
-  function paint() { const c = THEME[(lvl - 1) % 4], wl = K.T.stone(64, 64, c), fl = K.T.stone(64, 64, K.dark(c, .52)), hi = K.lite(c, .3), lo = K.dark(c, .62), W = (x, y) => !open(x, y);
+  function paint() { const c = THEME[(lvl - 1) % 4], wl = K.T.stone(64, 64, c), fl = K.T.stone(64, 64, K.dark(c, .6)), hi = K.lite(c, .3), lo = K.dark(c, .62), W = (x, y) => !open(x, y);
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const X = x * T, Y = y * T, r = Math.random();
       if (m[y][x]) { bq.drawImage(wl, X % 64, Y % 64, T, T, X, Y, T, T);
         if (r < .1) { K.box(bq, X + 5, Y + 4, 2, 4, '#5fe3d6'); K.box(bq, X + 5, Y + 4, 1, 2, '#d8fff8'); K.box(bq, X + 8, Y + 6, 2, 3, '#3aa89e'); }
@@ -110,8 +110,8 @@ init(A) {
       if (Math.hypot(dx, dy) < 11) { want = null; hold = true; } else go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? D.right : D.left) : (dy > 0 ? D.down : D.up), false); },
     update(dt) { tm += dt; msgT -= dt; hintT -= dt; if (sh > 0) sh -= dt;
       for (const p of pops) { p.t -= dt; p.y -= dt * 14; } if (pops.length && pops[0].t <= 0) pops.shift();
-      if (dead > 0) { dead -= dt; if (dead <= 0) A.over(); return; }
-      if (tr > 0) { tr -= dt; if (tr <= 0) { if (lvl >= LAST) A.over(true); else { lvl++; start = { x: door.x, y: door.y }; gen(); } } return; }
+      if (dead > 0) { dead -= dt; if (dead <= 0) { msgT = 0; A.over(); } return; }
+      if (tr > 0) { tr -= dt; if (tr <= 0) { if (lvl >= LAST) { msgT = 0; A.over(true); } else { lvl++; start = { x: door.x, y: door.y }; gen(); } } return; }
       if (inv > 0) inv -= dt; if (grace > 0) grace -= dt; /* foes wait a moment at the start of a cave */
       if (!want || (hold && !A.keys[want.n])) { const d = DIRS.find(d => A.keys[d.n]); if (d) { want = d; hold = true; } else if (hold) want = null; } /* also picks up a key held through a cave change */
       const was = pl.dx || pl.dy; move(pl, 5.5, dt, steerP, arrive); if (tr > 0) return;
@@ -144,9 +144,10 @@ init(A) {
       g.restore();
       /* HUD along the top wall */
       K.box(g, 0, 0, 240, 15, 'rgba(8,6,16,.8)'); K.box(g, 0, 15, 240, 1, '#140e1c');
-      for (let i = 0; i < lives; i++) K.put(g, K.heart(), 9 + i * 13, 8); if (hasKey) K.put(g, K.key(), 82, 8);
-      if (lvl > 1) { K.put(g, flask(), 100, 7); K.box(g, 107, 4, 44, 7, '#140e1c'); K.box(g, 108, 5, 42, 5, '#3a2c40'); K.box(g, 108, 5, Math.ceil(42 * oil), 5, oil < .25 ? (f ? '#ff4060' : '#ffb43c') : '#ffb43c'); K.box(g, 108, 5, Math.ceil(42 * oil), 1, '#fff0a0'); }
-      A.text(g, 'BONUS', 198, 5, '#9aa4b6', 1, 'right'); A.text(g, Math.ceil(bonus / 10) * 10, 236, 3, bonus > 0 ? '#ffd23c' : '#6a6478', 2, 'right');
+      for (let i = 0; i < lives; i++) K.put(g, K.heart(), 9 + i * 13, 8); if (hasKey) K.put(g, K.key(), 77, 8);
+      if (lvl > 1) { K.put(g, flask(), 91, 7); K.box(g, 97, 4, 38, 7, '#140e1c'); K.box(g, 98, 5, 36, 5, '#3a2c40'); K.box(g, 98, 5, Math.ceil(36 * oil), 5, oil < .25 ? (f ? '#ff4060' : '#ffb43c') : '#ffb43c'); K.box(g, 98, 5, Math.ceil(36 * oil), 1, '#fff0a0'); }
+      K.put(g, ITEM.gem(), 146, 8); A.text(g, gemsN, 154, 3, gemsN ? '#5fe3d6' : '#6a6478', 2); /* gems still hidden in this cave */
+      A.text(g, 'BONUS', 208, 5, '#9aa4b6', 1, 'right'); A.text(g, Math.ceil(bonus / 10) * 10, 236, 3, bonus > 0 ? '#ffd23c' : '#6a6478', 2, 'right');
       if (msgT > 0) { const w = Math.max(msg.length * 12, sub.length * 4) + 14, x = 120 - (w >> 1), y = py > 7.5 ? 44 : 150; K.box(g, x - 1, y - 1, w + 2, sub ? 40 : 29, '#ffd23c'); K.box(g, x, y, w, sub ? 38 : 27, '#140e1c'); A.text(g, msg, 120, y + 7, '#ffd23c', 3, 'center'); if (sub) A.text(g, sub, 120, y + 27, '#fff6c8', 1, 'center'); } }
   };
 } });
