@@ -6,15 +6,15 @@ init(A) {
   /* stages: name, cruise speed, hazard spacing, colours [sand, sand shade, water edge, water a, water b, deep, glint, rock] */
   const ST = [
     { n: 'MEADOW', v: 95, gap: 150, c: ['#ecd9a0', '#c8b070', '#3f96d6', '#1b6fb0', '#1f76b8', '#16609c', '#7fc0f0', '#8a94a4'] },
-    { n: 'PINE WOODS', v: 110, gap: 135, c: ['#d0c090', '#a09060', '#3a8ec0', '#17639c', '#1b6aa4', '#125488', '#78b8e6', '#7a8494'] },
-    { n: 'RED CANYON', v: 125, gap: 122, c: ['#f0c890', '#c8905a', '#3fc0c0', '#1b8a9a', '#1f92a2', '#167686', '#9fe6e6', '#b8704a'] },
-    { n: 'ICE VALLEY', v: 140, gap: 112, c: ['#ffffff', '#bcd6ec', '#7fc4ee', '#3f8ac8', '#4690cc', '#3478b4', '#e6f6ff', '#bfe0f5'] },
-    { n: 'SUNNY DELTA', v: 155, gap: 104, c: ['#fff0c0', '#e0c080', '#4fc8e0', '#1f96c8', '#24a0d0', '#1880b0', '#b8f0ff', '#8a94a4'] }];
+    { n: 'PINE WOODS', v: 107, gap: 135, c: ['#d0c090', '#a09060', '#3a8ec0', '#17639c', '#1b6aa4', '#125488', '#78b8e6', '#7a8494'] },
+    { n: 'RED CANYON', v: 119, gap: 122, c: ['#f0c890', '#c8905a', '#3fc0c0', '#1b8a9a', '#1f92a2', '#167686', '#9fe6e6', '#b8704a'] },
+    { n: 'ICE VALLEY', v: 131, gap: 112, c: ['#ffffff', '#bcd6ec', '#7fc4ee', '#3f8ac8', '#4690cc', '#3478b4', '#e6f6ff', '#bfe0f5'] },
+    { n: 'SUNNY DELTA', v: 143, gap: 104, c: ['#fff0c0', '#e0c080', '#4fc8e0', '#1f96c8', '#24a0d0', '#1880b0', '#b8f0ff', '#8a94a4'] }];
   const E = []; ST.reduce((a, t) => (E.push(a + t.v * 27), a + t.v * 27), 0); /* world distance where each stage ends */
   const T = E[4], si = w => { let i = 0; while (i < 4 && w >= E[i]) i++; return i; };
   /* river centre and half width: it winds more and gets narrower on the way down, then opens into the sea */
   const cx = w => 120 + Math.sin(w * .008) * (28 + 22 * Math.min(1, w / T)) + Math.sin(w * .021 + 1) * 10;
-  const hw = w => 60 - 18 * Math.min(1, w / T) + 3 * Math.sin(w * .013) + Math.max(0, w - T) * 1.2;
+  const hw = w => 60 - 14 * Math.min(1, w / T) + 3 * Math.sin(w * .013) + Math.max(0, w - T) * 1.2;
 
   /* ---- sprites (cached by K.spr / K.tex) ---- */
   const starP = (n, r1, r2) => { const p = []; for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * TAU, r = i % 2 ? r2 : r1; p.push(Math.sin(a) * r, -Math.cos(a) * r); } return p; };
@@ -41,11 +41,12 @@ init(A) {
   /* ---- state ---- */
   const F = K.fx();
   let s = 0, x = cx(AHEAD), vx = 0, tx = x, ptrMode = false, sp = 60, boost = 0, lives = 3, inv = 0, stage = 0, streak = 0, far = 0, tm = 0;
-  let obs = [], nextW = 380, last = '', heartAt = -1, shake = 0, dead = 0, won = 0, pops = [], jq = [], ban = { a: 'STAGE 1', b: ST[0].n, t: 2.4 };
+  let obs = [], nextW = 380, last = '', heartAt = -1, shake = 0, shx = 0, shy = 0, dead = 0, won = 0, pops = [], jq = [], ban = { a: 'STAGE 1', b: ST[0].n, t: 2.4 };
   const mult = () => Math.min(5, 1 + Math.floor(streak / 5));
   const pop = (t, px, py, c) => pops.push({ t, x: Math.max(24, Math.min(W - 24, px)), y: py, l: .9, c: c || '#fff6c8' });
   const tune = (fs, gap) => fs.forEach((f, i) => jq.push([i * (gap || .11), f]));
-  const hud = () => A.info('STAGE ' + (stage + 1) + '/5 · LIVES ' + lives + (mult() > 1 ? ' · x' + mult() : '') + (boost > 0 ? ' · BOOST!' : ''));
+  const chain = () => { if (++streak % 5 === 0 && streak <= 20) { pop('X' + mult() + '!', x, BY - 30, '#5fe3d6'); tune([880, 1175], .07); } }; /* every 5 coins or gates in a row: multiplier up */
+  const hud = () => A.info(boost > 0 ? 'BOOST!' : 'STAGE ' + (stage + 1) + '/5');
 
   /* ---- course generator: one pattern per slot, always leaving a clear way through ---- */
   const put = (t, w, off, o) => obs.push(Object.assign({ t, w, off }, o));
@@ -53,7 +54,7 @@ init(A) {
   function spawn() {
     while (nextW < s + 470 && nextW < T - 140) {
       const st = si(nextW), w = nextW, h = hw(w), side = Math.random() < .5 ? -1 : 1;
-      if (E[st] - w < 150 || (st && w - E[st - 1] < 110)) { nextW += 50; continue; } /* calm water around each stage line */
+      if (E[st] - w < 150 || (st && w - E[st - 1] < 160)) { nextW += 50; continue; } /* calm water around each stage line */
       if (st && st > heartAt && w > (E[st - 1] + E[st]) / 2) { heartAt = st; put('h', w, A.rnd(-.4, .4) * h); nextW += 70; continue; }
       const bag = ['r', 'r', 'c', 'c', 'g', 'b']; if (st > 0) bag.push('l', 'l', 'R'); if (st > 1) bag.push('w', 'w', 'R'); if (st > 2) bag.push('i', 'i');
       let k; do k = bag[A.ri(0, bag.length - 1)]; while (k === last && k !== 'r'); last = k; let len = 0;
@@ -85,7 +86,7 @@ init(A) {
 
   return {
     update(dt) {
-      tm += dt; shake -= dt; ban.t -= dt; inv -= dt; boost -= dt;
+      tm += dt; shake -= dt; shx = shake > 0 ? A.ri(-2, 2) : 0; shy = shake > 0 ? A.ri(-2, 2) : 0; ban.t -= dt; inv -= dt; boost -= dt;
       for (const j of jq) if ((j[0] -= dt) <= 0) A.beep(j[1], .14, 'triangle', .05); jq = jq.filter(j => j[0] > 0);
       for (const p of pops) { p.l -= dt; p.y -= 22 * dt; } pops = pops.filter(p => p.l > 0);
       if (dead > 0) { sp *= 1 - 3 * dt; s += sp * dt; if ((dead -= dt) <= 0) A.over(); return; }
@@ -98,12 +99,12 @@ init(A) {
       if (Math.abs(x - c) > h - 5) { const sd = x < c ? -1 : 1; if (inv <= 0) { crash(); x = c + sd * (h - 20); } else { x = c + sd * (h - 5); vx = 0; } }
       /* things in the water */
       for (const o of obs) { const X = ox(o), dx = X - x, ax = Math.abs(dx), ay = Math.abs(o.w - wb);
-        if (o.t === 'c') { if (ax < 12 && ay < 15) { o.got = 1; streak++; const n = 10 * mult(); A.add(n); pop('+' + n, X, BY - 16); F.spark(X, BY - 6, ['#ffd23c', '#fff6c8'], 5, 50); A.beep(Math.min(1500, 720 + streak * 24), .07, 'square', .03); if (streak % 5 === 0 && mult() <= 5 && streak <= 20) { pop('X' + mult() + '!', x, BY - 30, '#5fe3d6'); tune([880, 1175], .07); } } }
+        if (o.t === 'c') { if (ax < 12 && ay < 15) { o.got = 1; chain(); const n = 10 * mult(); A.add(n); pop('+' + n, X, BY - 16); F.spark(X, BY - 6, ['#ffd23c', '#fff6c8'], 5, 50); A.beep(Math.min(1500, 720 + streak * 24), .07, 'square', .03); } }
         else if (o.t === 'b') { if (ax < 14 && ay < 15) { o.got = 1; boost = 1.6; A.add(20); pop('BOOST!', X, BY - 16, '#ffd23c'); tune([520, 780, 1040], .06); } }
         else if (o.t === 'h') { if (ax < 13 && ay < 15) { o.got = 1; if (lives < 5) { lives++; pop('+1 LIFE', X, BY - 16, '#ff8a9a'); } else { A.add(100); pop('+100', X, BY - 16, '#ff8a9a'); } tune([660, 990, 1320], .08); F.spark(X, BY - 6, ['#ff8a9a', '#ffffff'], 10, 60); } }
-        else if (o.t === 'g') { if (!o.done && o.w <= wb) { o.done = 1; if (ax < 15) { o.ok = 1; streak++; const n = 30 * mult(); A.add(n); pop('GATE +' + n, X, BY - 16, '#5fe3d6'); tune([784, 1047], .08); } } }
+        else if (o.t === 'g') { if (!o.done && o.w <= wb) { o.done = 1; if (ax < 15) { o.ok = 1; chain(); const n = 30 * mult(); A.add(n); pop('GATE +' + n, X, BY - 16, '#5fe3d6'); tune([784, 1047], .08); } } }
         else if (o.t === 'w') { if (ay < 40 && ax < 46) x += Math.sign(dx) * 62 * dt * (1 - ax / 46); if (ax < 9 && ay < 11) crash(); }
-        else if (inv <= 0 && ax < (o.t === 'l' ? 18 : o.t === 'i' ? 17 : 11) && ay < (o.t === 'i' ? 27 : o.t === 'l' ? 16 : 17)) { crash(); if (o.t !== 'i') { o.got = 1; F.spark(X, BY - (o.w - wb), o.t === 'l' ? ['#c08a4a', '#8a5a2a'] : ['#c8d0dc', '#8a94a4'], 12, 70); } } }
+        else if (inv <= 0 && ax < (o.t === 'l' ? 18 : o.t === 'i' ? 17 : 10) && ay < (o.t === 'i' ? 27 : 16)) { crash(); if (o.t !== 'i') { o.got = 1; F.spark(X, BY - (o.w - wb), o.t === 'l' ? ['#c08a4a', '#8a5a2a'] : ['#c8d0dc', '#8a94a4'], 12, 70); } } }
       if (dead > 0) { hud(); return; }
       /* stage lines and the sea */
       if (wb >= E[stage]) { const bonus = 100 * (stage + 1) + 25 * lives; A.add(bonus);
@@ -115,7 +116,7 @@ init(A) {
       hud();
     },
     draw(g) {
-      const sx = shake > 0 ? Math.round(A.rnd(-2, 2)) : 0, sy = shake > 0 ? Math.round(A.rnd(-2, 2)) : 0; g.save(); g.translate(sx, sy);
+      g.save(); g.translate(shx, shy);
       /* ground: this stage's texture, with the next one above the stage line */
       const s0 = si(s), yb = Math.round(H - (E[s0] - s)); K.scroll(g, gtex(s0), 0, -s, W, H);
       if (s0 < 4 && yb > 0) { g.save(); g.beginPath(); g.rect(-4, -4, W + 8, yb + 4); g.clip(); K.scroll(g, gtex(s0 + 1), 0, -s, W, H); g.restore(); }
@@ -153,8 +154,8 @@ init(A) {
       if (mult() > 1) { A.text(g, 'X' + mult(), 7, 21, '#140e1c', 2); A.text(g, 'X' + mult(), 6, 20, '#5fe3d6', 2); }
       K.box(g, 150, 5, 84, 7, '#140e1c'); K.box(g, 151, 6, 82, 5, '#2a3f7a'); const pr = Math.min(1, (s + AHEAD) / T); K.box(g, 151, 6, Math.round(82 * pr), 5, '#5fe3d6'); K.box(g, 151, 6, Math.round(82 * pr), 1, '#c8fffa');
       for (let i = 0; i < 4; i++) K.box(g, 151 + Math.round(82 * E[i] / T), 6, 1, 5, '#140e1c'); K.box(g, 150 + Math.round(82 * pr), 4, 3, 9, '#ffffff');
-      if (ban.t > 0 && (ban.t > .5 || Math.floor(ban.t * 12) % 2)) { K.box(g, 0, 84, W, 40, 'rgba(20,14,28,.72)'); K.box(g, 0, 84, W, 1, '#ffd23c'); K.box(g, 0, 123, W, 1, '#ffd23c');
-        A.text(g, ban.a, 120, 91, '#ffd23c', 3, 'center'); A.text(g, ban.b, 120, 111, '#ffffff', 2, 'center'); }
+      if (ban.t > 0 && (ban.t > .5 || Math.floor(ban.t * 12) % 2)) { K.box(g, 0, 34, W, 40, 'rgba(20,14,28,.72)'); K.box(g, 0, 34, W, 1, '#ffd23c'); K.box(g, 0, 73, W, 1, '#ffd23c');
+        A.text(g, ban.a, 120, 41, '#ffd23c', 3, 'center'); A.text(g, ban.b, 120, 61, '#ffffff', 2, 'center'); }
     }
   };
 } });
