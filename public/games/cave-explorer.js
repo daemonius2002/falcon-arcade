@@ -24,13 +24,16 @@ init(A) {
       const p0 = pl; step(pl, 5.5, dt, chP); if (pl !== p0) return;
       for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if ((x - pl.x) ** 2 + (y - pl.y) ** 2 <= 11) seen[y][x] = 1;
       for (const b of bats) { step(b, 2.2 + lvl * .2, dt, chB); const dx = b.x + b.dx * b.p - pl.x - pl.dx * pl.p, dy = b.y + b.dy * b.p - pl.y - pl.dy * pl.p; if (dx * dx + dy * dy < .45) { lives--; dead = 1; A.beep(150, .35, 'sawtooth'); info(); return; } } },
-    draw(g) { g.fillStyle = '#000'; g.fillRect(0, 0, 240, 240); const px = pl.x + pl.dx * pl.p, py = pl.y + pl.dy * pl.p, lit = (x, y) => (x - px) ** 2 + (y - py) ** 2 <= 11;
-      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { if (!seen[y][x]) continue; const X = x * T, Y = y * T; if (m[y][x]) { g.fillStyle = '#4a3626'; g.fillRect(X, Y, T, T); g.fillStyle = '#6a4e36'; g.fillRect(X, Y, T, 2); g.fillRect(X, Y, 2, T); g.fillStyle = '#2a1e14'; g.fillRect(X, Y + 14, T, 2); g.fillRect(X + 14, Y, 2, T); g.fillRect(X + 5, Y + 6, 3, 2); g.fillRect(X + 10, Y + 10, 2, 2); } else { g.fillStyle = '#1e1812'; g.fillRect(X, Y, T, T); g.fillStyle = '#2a2018'; g.fillRect(X + 3, Y + 4, 2, 2); g.fillRect(X + 10, Y + 11, 2, 2); }
-        if (!lit(x, y)) { g.fillStyle = 'rgba(0,0,0,.62)'; g.fillRect(X, Y, T, T); } }
-      const show = c => seen[c[1]][c[0]]; if (show(door)) { const X = door[0] * T, Y = door[1] * T; g.fillStyle = '#000'; g.fillRect(X + 2, Y + 1, 12, 15); g.fillStyle = hasKey ? '#3fd45a' : '#9a6a34'; g.fillRect(X + 3, Y + 2, 10, 14); g.fillStyle = '#ffd23c'; g.fillRect(X + 7, Y + 8, 2, 3); }
-      if (key && show(key)) { const X = key[0] * T + 3, Y = key[1] * T + 5; g.fillStyle = '#000'; g.fillRect(X - 1, Y - 1, 12, 8); g.fillStyle = '#ffd23c'; g.fillRect(X, Y, 5, 6); g.fillRect(X + 5, Y + 2, 5, 2); g.fillRect(X + 8, Y + 4, 2, 2); g.fillStyle = '#12101c'; g.fillRect(X + 1, Y + 2, 2, 2); }
-      for (const q of gems) if (show(q)) g.drawImage(GEM, q[0] * T + 3, q[1] * T + 3);
-      for (const b of bats) if (lit(b.x + b.dx * b.p, b.y + b.dy * b.p)) g.drawImage(BAT[Math.floor(tm * 8) % 2], Math.round((b.x + b.dx * b.p) * T) + 3, Math.round((b.y + b.dy * b.p) * T) + 4);
-      if (dead <= 0 || Math.floor(dead * 12) % 2) g.drawImage(HERO, Math.round(px * T) + 3, Math.round(py * T) + 3); }
+    draw(g) { const K = Art, px = pl.x + pl.dx * pl.p, py = pl.y + pl.dy * pl.p, wl = K.T.stone(64, 64, '#6a4e38'), fl = K.T.stone(64, 64, '#3a2c20'), W = (x, y) => x < 0 || y < 0 || x >= N || y >= N || m[y][x] === 1, f = Math.floor(tm * 8) % 2;
+      K.box(g, 0, 0, 240, 240, '#000000'); const dk = (x, y) => Math.max(0, Math.min(.55, (Math.hypot(x - px, y - py) - 2) * .2));
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { if (!seen[y][x]) continue; const X = x * T, Y = y * T; if (m[y][x]) { g.drawImage(wl, X % 64, Y % 64, T, T, X, Y, T, T); if (!W(x, y - 1)) { K.box(g, X, Y, T, 2, '#9a7a5a'); } if (!W(x, y + 1)) { K.box(g, X, Y + 11, T, 5, '#2a1c12'); K.box(g, X, Y + 10, T, 1, '#1a1008'); } if (!W(x - 1, y)) K.box(g, X, Y, 1, T, '#7a5e44'); if (!W(x + 1, y)) K.box(g, X + 15, Y, 1, T, '#2a1c12'); }
+        else { g.drawImage(fl, X % 64, Y % 64, T, T, X, Y, T, T); if (W(x, y - 1)) K.box(g, X, Y, T, 3, 'rgba(0,0,0,.4)'); }
+        const a = dk(x, y); if (a > 0) { g.fillStyle = `rgba(0,0,0,${a})`; g.fillRect(X, Y, T, T); } }
+      const lit = (x, y) => Math.hypot(x - px, y - py) < 3.6, show = c => seen[c[1]][c[0]];
+      if (show(door)) K.put(g, K.spr('cvdoor' + (hasKey ? 1 : 0), 12, 14, q => { K.rr(q, -6, -7, 12, 16, 5, hasKey ? '#3fd45a' : '#9a6a34'); K.box(q, -6, -1, 12, 1, '#5c6678'); K.box(q, 2, 1, 2, 3, '#ffd23c'); K.box(q, -4, -5, 2, 10, 'rgba(255,255,255,.25)'); }), door[0] * T + 8, door[1] * T + 8);
+      if (key && show(key)) K.put(g, K.key(), key[0] * T + 8, key[1] * T + 8 + (f ? 1 : 0)); for (const q of gems) if (show(q)) K.put(g, K.gem(0, '#5fe3d6', 10), q[0] * T + 8, q[1] * T + 8);
+      for (const b of bats) { const x = b.x + b.dx * b.p, y = b.y + b.dy * b.p; if (lit(x, y)) K.put(g, K.bat(f), x * T + 8, y * T + 7); }
+      const mn = n => K.spr('cvman' + n, 12, 15, q => { K.box(q, -3, 3, 2, 4 - n, '#5a4a6a'); K.box(q, 1, 3, 2, 3 + n, '#5a4a6a'); K.box(q, -4, -2, 8, 6, K.lin(q, -4, 0, 4, 0, '#8ae06a', '#3fb45a', '#1f6a2a')); K.ell(q, 0, -4, 3.4, 3, '#f0b890'); K.box(q, 0, -5, 1, 1, '#1a1222'); K.box(q, 2, -5, 1, 1, '#1a1222'); K.box(q, -4, -8, 8, 3, '#ffd23c'); K.box(q, 1, -8, 3, 2, '#fff6c8'); });
+      if (dead <= 0 || Math.floor(dead * 12) % 2) { g.fillStyle = 'rgba(255,220,140,.10)'; g.beginPath(); g.arc(px * T + 8, py * T + 8, 22, 0, 7); g.fill(); K.put(g, mn(pl.dx || pl.dy ? f : 0), px * T + 8, py * T + 7, pl.dx < 0 ? { flip: 1 } : null); } }
   };
 } });

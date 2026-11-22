@@ -20,15 +20,13 @@ init(A) {
       const l = lanes.find(v => v.row === frog.row); if (!l) return;
       if (l.type === 'car') { for (const o of l.o) { const x = o - l.len; if (frog.x + 13 > x && frog.x + 3 < x + l.len) die(); } }
       else { const on = l.o.some(o => { const x = o - l.len; return frog.x + 8 >= x - 2 && frog.x + 8 <= x + l.len + 2; }); if (on) { frog.x += l.dir * l.sp * dt; if (frog.x < -6 || frog.x > 150) die(); } else die(); } },
-    draw(g) { g.fillStyle = '#0f3a1f'; g.fillRect(0, 0, 160, 16); g.fillStyle = '#1b5fa8'; g.fillRect(0, 16, 160, 80); g.fillStyle = '#3f86d0'; for (let y = 20; y < 96; y += 8) for (let x = (y % 16) + 2; x < 160; x += 22) g.fillRect(x, y, 6, 1);
-      for (const r of [6, 12]) { g.fillStyle = '#5a4a6a'; g.fillRect(0, r * 16, 160, 16); g.fillStyle = '#7a6a8a'; g.fillRect(0, r * 16, 160, 2); g.fillStyle = '#44364f'; for (let x = 6; x < 160; x += 16) g.fillRect(x, r * 16 + 7, 8, 2); }
-      g.fillStyle = '#2a2a33'; g.fillRect(0, 112, 160, 80); g.fillStyle = '#6a6a78'; for (let r = 8; r < 12; r++) for (let x = 4; x < 160; x += 20) g.fillRect(x, r * 16 - 1, 10, 2);
-      SL.forEach((sx, i) => { g.fillStyle = '#1b5fa8'; g.fillRect(sx - 2, 0, 20, 16); g.fillStyle = '#1f7a2a'; g.fillRect(sx + 1, 2, 14, 12); g.fillStyle = '#3fb45a'; g.fillRect(sx + 2, 3, 12, 10); g.fillStyle = '#1b5fa8'; g.fillRect(sx + 7, 2, 2, 5); if (home[i]) g.drawImage(FROG, sx + 2, 2); });
-      for (const l of lanes) { const y = l.row * 16; for (const o of l.o) { const x = Math.round(o - l.len), L = l.len;
-        if (l.type === 'log') { g.fillStyle = '#2a1608'; g.fillRect(x, y + 2, L, 12); g.fillStyle = '#6a3e1c'; g.fillRect(x + 1, y + 3, L - 2, 10); g.fillStyle = '#9a6a34'; g.fillRect(x + 1, y + 3, L - 2, 3); g.fillStyle = '#4a2a10'; for (let k = 8; k < L - 6; k += 12) g.fillRect(x + k, y + 8, 5, 1); g.fillStyle = '#d8aa6a'; g.fillRect(x + L - 4, y + 4, 2, 8); }
-        else { g.fillStyle = '#000'; g.fillRect(x, y + 2, L, 12); g.fillRect(x + 3, y + 1, 5, 14); g.fillRect(x + L - 8, y + 1, 5, 14); g.fillStyle = CC[l.col]; g.fillRect(x + 1, y + 3, L - 2, 10); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(x + 1, y + 3, L - 2, 2);
-          if (L > 24) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(l.dir > 0 ? x + 2 : x + 12, y + 4, L - 14, 8); }
-          g.fillStyle = '#16223a'; g.fillRect(l.dir > 0 ? x + L - 9 : x + 5, y + 4, 4, 8); g.fillStyle = '#fff6c8'; g.fillRect(l.dir > 0 ? x + L - 2 : x + 1, y + 4, 1, 2); g.fillRect(l.dir > 0 ? x + L - 2 : x + 1, y + 10, 1, 2); } } }
-      const fx = Math.round(frog.x) + 2, fy = frog.row * 16 + 2; if (dead > 0) { if (Math.floor(dead * 12) % 2) { g.fillStyle = '#e8231e'; g.fillRect(fx + 1, fy + 1, 10, 10); g.fillStyle = '#fff'; g.fillRect(fx + 3, fy + 5, 6, 2); g.fillRect(fx + 5, fy + 3, 2, 6); } } else g.drawImage(FROG, fx, fy); }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx(), d: 0 }), t = performance.now() / 1000;
+      K.scroll(g, K.T.water(64, 64), t * 5, 0, 160, 96); g.drawImage(K.T.grass(160, 16), 0, 0); K.box(g, 0, 15, 160, 1, '#1f5a28');
+      SL.forEach((sx, i) => { K.box(g, sx - 2, 0, 20, 16, '#1b6fb0'); K.box(g, sx - 2, 0, 20, 1, '#0f4f8a'); K.put(g, K.lily(), sx + 8, 8); if (home[i]) K.put(g, K.frog(0), sx + 8, 7); });
+      for (const r of [6, 12]) { g.drawImage(K.T.stone(160, 16, '#7a6a8a'), 0, r * 16); K.box(g, 0, r * 16, 160, 1, '#b0a0c0'); K.box(g, 0, r * 16 + 15, 160, 1, '#3a2e44'); for (let x = 0; x < 160; x += 16) K.box(g, x, r * 16 + 1, 1, 14, '#5a4a6a'); }
+      g.drawImage(K.T.road(160, 80), 0, 112); for (let r = 8; r < 12; r++) for (let x = 4; x < 160; x += 20) K.box(g, x, r * 16 - 1, 10, 2, '#d6dbea'); K.box(g, 0, 112, 160, 1, '#ffd23c'); K.box(g, 0, 191, 160, 1, '#ffd23c');
+      for (const l of lanes) { const y = l.row * 16; for (const o of l.o) { const x = Math.round(o - l.len), L = l.len; if (l.type === 'log') { K.box(g, x + 2, y + 5, L, 10, 'rgba(8,30,70,.45)'); K.put(g, K.log(L), x + L / 2, y + 8, l.dir < 0 ? { flip: 1 } : null); } else { K.box(g, x + 2, y + 5, L, 10, 'rgba(0,0,0,.3)'); K.put(g, K.car(CC[l.col], L), x + L / 2, y + 8, { rot: l.dir > 0 ? Math.PI / 2 : -Math.PI / 2 }); } } }
+      const fx = Math.round(frog.x) + 8, fy = frog.row * 16 + 8; if (dead > 0 && !S.d) S.F.spark(fx, fy, ['#e8231e', '#ffffff', '#6fe85a'], 14, 90); S.d = dead > 0;
+      if (dead <= 0) { K.shadow(g, fx, fy + 5, 5, 2); K.put(g, K.frog(Math.floor(t * 3) % 2), fx, fy); } S.F.draw(g); }
   };
 } });

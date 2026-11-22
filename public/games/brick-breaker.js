@@ -17,9 +17,12 @@ init(A) {
         for (const k of bricks) if (b.x > k.x - 3 && b.x < k.x + 29 && b.y > k.y - 3 && b.y < k.y + 15) { bricks.splice(bricks.indexOf(k), 1); if (oy <= k.y - 3 || oy >= k.y + 15) b.vy = -b.vy; else b.vx = -b.vx; A.add(10 * lvl); A.beep(660 + k.c * 40, .05); sp = Math.min(330, sp + 1.5); break; } }
       if (b.y > 326) { lives--; A.beep(140, .3, 'sawtooth'); if (lives <= 0) { A.info('BALLS 0  LEVEL ' + lvl); A.over(); } else serve(); }
       else if (!bricks.length) { lvl++; A.add(100); wave(); serve(); } },
-    draw(g) { g.fillStyle = '#12101c'; g.fillRect(0, 0, 240, 320); g.fillStyle = '#1b1830'; for (let y = 0; y < 320; y += 16) for (let x = (y / 16 % 2) * 16; x < 240; x += 32) g.fillRect(x, y, 16, 16);
-      for (const k of bricks) { g.fillStyle = '#000'; g.fillRect(k.x - 1, k.y - 1, 28, 14); g.fillStyle = COL[k.c]; g.fillRect(k.x, k.y, 26, 12); g.fillStyle = 'rgba(255,255,255,.45)'; g.fillRect(k.x, k.y, 26, 2); g.fillRect(k.x, k.y, 2, 12); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(k.x, k.y + 10, 26, 2); g.fillRect(k.x + 24, k.y, 2, 12); }
-      const x = Math.round(px - pw / 2); g.fillStyle = '#000'; g.fillRect(x - 1, 301, pw + 2, 9); g.fillStyle = '#aab4c2'; g.fillRect(x, 302, pw, 7); g.fillStyle = '#f2f5f8'; g.fillRect(x, 302, pw, 2); g.fillStyle = '#5c6678'; g.fillRect(x, 307, pw, 2); g.fillStyle = '#e8231e'; g.fillRect(x, 302, 6, 7); g.fillRect(x + pw - 6, 302, 6, 7);
-      const bx = Math.round(b.x), by = Math.round(b.y); g.fillStyle = '#000'; g.fillRect(bx - 4, by - 4, 8, 8); g.fillStyle = '#fff'; g.fillRect(bx - 3, by - 3, 6, 6); g.fillStyle = '#ffd23c'; g.fillRect(bx, by, 3, 3); }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx(), tr: [] });
+      K.scroll(g, K.T.brick(64, 64, '#2a2244'), 0, 0, 240, 320); g.fillStyle = 'rgba(8,4,20,.18)'; g.fillRect(0, 0, 240, 320); K.box(g, 0, 0, 240, 2, '#59627a'); K.box(g, 0, 0, 2, 320, '#59627a'); K.box(g, 238, 0, 2, 320, '#59627a');
+      for (const k of K.gone(S, 'bk', bricks)) S.F.spark(k.x + 13, k.y + 6, [COL[k.c], '#ffffff'], 10, 100);
+      for (const k of bricks) { g.fillStyle = 'rgba(0,0,0,.32)'; g.fillRect(k.x + 2, k.y + 3, 26, 12); g.drawImage(K.block(26, 12, COL[k.c]), k.x, k.y); }
+      K.shadow(g, px, 312, pw / 2, 2); K.put(g, K.paddle(pw, '#e8231e'), px, 305);
+      S.tr.push([b.x, b.y]); if (S.tr.length > 7) S.tr.shift(); S.tr.forEach((q, i) => { g.fillStyle = `rgba(255,210,60,${i / 16})`; g.fillRect(Math.round(q[0]) - 2, Math.round(q[1]) - 2, 4, 4); });
+      K.put(g, K.ball(4, '#f2f5f8'), b.x, b.y); S.F.draw(g); }
   };
 } });

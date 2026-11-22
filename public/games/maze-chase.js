@@ -27,13 +27,15 @@ init(A) {
       for (const e of en) { step(e, es, dt, chE); const dx = e.x + e.dx * e.p - pl.x - pl.dx * pl.p, dy = e.y + e.dy * e.p - pl.y - pl.dy * pl.p;
         if (dx * dx + dy * dy < .5) { if (scared > 0) { A.add(100); A.beep(900, .1); e.x = e.hx; e.y = e.hy; e.dx = e.dy = 0; e.p = 0; } else { lives--; dead = 1; A.beep(150, .4, 'sawtooth'); info(); return; } } }
       if (dots <= 0) { lvl++; A.add(200); A.beep(880, .3, 'triangle'); gen(); info(); } },
-    draw(g) { g.fillStyle = '#12101c'; g.fillRect(0, 0, 228, 252);
-      for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const v = grid[y][x], X = x * T, Y = y * T;
-        if (v === 1) { g.fillStyle = '#2a2f6a'; g.fillRect(X, Y, T, T); g.fillStyle = '#4a52a0'; g.fillRect(X, Y, T, 1); g.fillRect(X, Y, 1, T); g.fillStyle = '#161a40'; g.fillRect(X, Y + 11, T, 1); g.fillRect(X + 11, Y, 1, T); }
-        else if (v === 2) { g.fillStyle = '#ffd9a0'; g.fillRect(X + 5, Y + 5, 2, 2); }
-        else if (v === 3 && Math.floor(tm * 5) % 2) { g.fillStyle = '#5fe3d6'; g.fillRect(X + 3, Y + 3, 6, 6); g.fillStyle = '#fff'; g.fillRect(X + 5, Y + 5, 2, 2); } }
-      const at = (e, s) => g.drawImage(s, Math.round((e.x + e.dx * e.p) * T) + 1, Math.round((e.y + e.dy * e.p) * T) + 1);
-      en.forEach((e, i) => at(e, scared > 0 ? (scared < 1.5 && Math.floor(tm * 8) % 2 ? SC2 : SC) : SL[i]));
-      if (dead <= 0 || Math.floor(dead * 12) % 2) at(pl, BOT); }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx() }), f = Math.floor(tm * 6) % 2, W = (x, y) => x < 0 || y < 0 || x >= GW || y >= GH || grid[y][x] === 1;
+      if (S.gr !== grid) { S.gr = grid; const k = K.mkc(228, 252), q = k.getContext('2d'), fl = K.T.stone(64, 64, '#1c1834'), wl = K.T.stone(64, 64, '#3a48b0'); K.scroll(q, fl, 0, 0, 228, 252);
+        for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const X = x * T, Y = y * T; if (!W(x, y)) { if (W(x, y - 1)) K.box(q, X, Y, T, 3, 'rgba(0,0,10,.45)'); if (W(x - 1, y)) K.box(q, X, Y, 2, T, 'rgba(0,0,10,.3)'); continue; }
+          q.drawImage(wl, X % 64, Y % 64, T, T, X, Y, T, T); if (!W(x, y - 1)) { K.box(q, X, Y, T, 1, '#141030'); K.box(q, X, Y + 1, T, 2, '#8a96f0'); } if (!W(x, y + 1)) { K.box(q, X, Y + 8, T, 3, '#1f2870'); K.box(q, X, Y + 11, T, 1, '#141030'); } if (!W(x - 1, y)) { K.box(q, X, Y, 1, T, '#141030'); K.box(q, X + 1, Y + 1, 1, T - 2, '#6a78e0'); } if (!W(x + 1, y)) { K.box(q, X + 11, Y, 1, T, '#141030'); K.box(q, X + 10, Y + 1, 1, T - 2, '#2a3490'); } } S.bg = k; }
+      g.drawImage(S.bg, 0, 0);
+      for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const v = grid[y][x]; if (v === 2) { K.box(g, x * T + 4, y * T + 4, 4, 4, '#5a3a10'); K.box(g, x * T + 5, y * T + 5, 2, 2, '#ffd98a'); K.box(g, x * T + 5, y * T + 5, 1, 1, '#ffffff'); } else if (v === 3) K.put(g, K.star2('#5fe3d6', f ? 12 : 10), x * T + 6, y * T + 6); }
+      const bot = n => K.spr('mzbot' + n, 12, 13, q => { K.box(q, -1, -7, 2, 2, '#ffd23c'); K.rr(q, -5, -5, 10, 9, 2, K.lin(q, -5, 0, 5, 0, '#c8fffa', '#5fe3d6', '#1f8a84')); K.box(q, -4, -3, 8, 4, '#12303a'); K.box(q, -3, -2, 2, 2, '#ffffff'); K.box(q, 1, -2, 2, 2, '#ffffff'); K.box(q, n ? -4 : -3, 4, 3, 2, '#3a4152'); K.box(q, n ? 1 : 0, 4, 3, 2, '#3a4152'); });
+      const at = (e, s) => { const x = (e.x + e.dx * e.p) * T + 6, y = (e.y + e.dy * e.p) * T + 6; K.shadow(g, x, y + 5, 4, 2); K.put(g, s, x, y); };
+      en.forEach((e, i) => at(e, K.slime(scared > 0 ? (scared < 1.5 && Math.floor(tm * 8) % 2 ? '#d6dbea' : '#3f6ad0') : ['#e8231e', '#ff8a1e', '#b06ae0'][i], f)));
+      if (dead <= 0 || Math.floor(dead * 12) % 2) at(pl, bot(pl.dx || pl.dy ? f : 0)); S.F.draw(g); }
   };
 } });

@@ -1,4 +1,4 @@
-# Falcon Arcade v0.2.0
+# Falcon Arcade v0.3.0
 
 Pixel games platform: 6 categories, 30 games, all playable.
 

@@ -15,12 +15,12 @@ init(A) {
       if (lit.every(v => v)) { A.add(100 * lvl + Math.ceil(time)); done = 1.1; A.beep(880, .3, 'triangle'); } },
     update(dt) { if (done > 0) { done -= dt; if (done <= 0) { lvl++; n = Math.min(7, 5 + (lvl >> 1)); time = Math.min(120, time + 25); gen(); } return; }
       time -= dt; A.info('TIME ' + Math.max(0, Math.ceil(time)) + '  BOARD ' + lvl); if (time <= 0) A.over(); },
-    draw(g) { g.fillStyle = '#12141c'; g.fillRect(0, 0, 168, 192); const o = off();
-      for (let i = 0; i < n * n; i++) { const X = o[0] + (i % n) * T, Y = o[1] + Math.floor(i / n) * T, on = lit[i], c1 = on ? '#3fa8e0' : '#6a7284', c2 = on ? '#b8e6ff' : '#a0a8ba', c3 = on ? '#1f5f9a' : '#3a4152';
-        g.fillStyle = '#1b1e29'; g.fillRect(X, Y, T, T); g.fillStyle = '#2a2f3d'; g.fillRect(X, Y, T, 1); g.fillRect(X, Y, 1, T); g.fillStyle = '#0c0d12'; g.fillRect(X, Y + 23, T, 1); g.fillRect(X + 23, Y, 1, T);
-        const arm = (x, y, w, h, v) => { g.fillStyle = c3; g.fillRect(X + x, Y + y, w, h); g.fillStyle = c1; if (v) g.fillRect(X + x + 1, Y + y, w - 2, h); else g.fillRect(X + x, Y + y + 1, w, h - 2); g.fillStyle = c2; if (v) g.fillRect(X + x + 2, Y + y, 2, h); else g.fillRect(X + x, Y + y + 2, w, 2); };
+    draw(g) { const K = Art, o = off(), ph = Math.floor(performance.now() / 160); K.scroll(g, K.T.panel(64, 64, '#263050'), 0, 0, 168, 192);
+      for (let i = 0; i < n * n; i++) { const X = o[0] + (i % n) * T, Y = o[1] + Math.floor(i / n) * T, on = lit[i], c1 = on ? '#3fa8e0' : '#7a8496', c2 = on ? '#c8eeff' : '#b4bcce', c3 = on ? '#1a4f8a' : '#3a4152';
+        g.drawImage(K.block(24, 24, '#2a3046'), X, Y);
+        const arm = (x, y, w, h, v) => { K.box(g, X + x, Y + y, w, h, '#140e1c'); if (v) { K.box(g, X + x + 1, Y + y, w - 2, h, c1); K.box(g, X + x + 2, Y + y, 2, h, c2); K.box(g, X + x + w - 3, Y + y, 2, h, c3); if (on) K.box(g, X + x + 3, Y + y + (ph + i) % h, 1, 2, '#ffffff'); } else { K.box(g, X + x, Y + y + 1, w, h - 2, c1); K.box(g, X + x, Y + y + 2, w, 2, c2); K.box(g, X + x, Y + y + h - 3, w, 2, c3); if (on) K.box(g, X + x + (ph + i) % w, Y + y + 3, 2, 1, '#ffffff'); } };
         if (m[i] & 1) arm(8, 0, 8, 12, 1); if (m[i] & 4) arm(8, 12, 8, 12, 1); if (m[i] & 8) arm(0, 8, 12, 8, 0); if (m[i] & 2) arm(12, 8, 12, 8, 0);
-        g.fillStyle = c3; g.fillRect(X + 7, Y + 7, 10, 10); g.fillStyle = i === src ? '#ffd23c' : c1; g.fillRect(X + 8, Y + 8, 8, 8); g.fillStyle = i === src ? '#fff6c8' : c2; g.fillRect(X + 9, Y + 9, 3, 3); }
-      if (done > 0) { g.fillStyle = 'rgba(13,11,20,.75)'; g.fillRect(0, 84, 168, 24); A.text(g, 'CONNECTED!', 84, 91, '#5fe3d6', 2, 'center'); } }
+        K.put(g, K.ball(i === src ? 7 : 5, i === src ? '#ffd23c' : on ? '#3fa8e0' : '#8a94a4'), X + 12, Y + 12); }
+      if (done > 0) { K.box(g, 0, 82, 168, 28, 'rgba(13,11,20,.8)'); K.box(g, 0, 82, 168, 2, '#5fe3d6'); K.box(g, 0, 108, 168, 2, '#5fe3d6'); A.text(g, 'CONNECTED!', 84, 91, '#5fe3d6', 2, 'center'); } }
   };
 } });

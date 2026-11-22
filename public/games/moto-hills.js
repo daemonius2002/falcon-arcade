@@ -14,12 +14,13 @@ init(A) {
       for (const c of cans) if (!c.got && Math.abs(c.x - x) < 10 && Math.abs(h(c.x) - 8 - y) < 18) { c.got = 1; fuel = Math.min(100, fuel + 38); A.add(30); A.beep(800, .1, 'triangle'); }
       cans = cans.filter(c => c.x > x - 150); const d = Math.floor(x / 20); if (d > far) { A.add(d - far); far = d; }
       still = Math.abs(vx) < 6 && fuel <= 0 ? still + dt : 0; if (still > 1.5) { A.over(); return; } A.info('FUEL ' + Math.ceil(fuel)); },
-    draw(g) { const cam = x - 70; ['#ff9a5a', '#ffb870', '#ffd98a', '#ffe9b0'].forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * 30, 240, 40); }); g.fillStyle = '#fff6c8'; g.fillRect(170, 22, 20, 20);
-      g.fillStyle = '#c8704a'; for (let i = 0; i < 240; i += 4) g.fillRect(i, 78 + Math.sin((i + cam * .25) * .03) * 14, 4, 90); g.fillStyle = '#9a4a34'; for (let i = 0; i < 240; i += 4) g.fillRect(i, 96 + Math.sin((i + cam * .5) * .045 + 2) * 10, 4, 70);
-      for (let i = 0; i < 240; i += 2) { const gy = Math.round(h(cam + i)); g.fillStyle = '#5a3418'; g.fillRect(i, gy, 2, 160 - gy); g.fillStyle = '#3fb45a'; g.fillRect(i, gy, 2, 3); g.fillStyle = '#3a2010'; if ((Math.floor((cam + i) / 2) * 7) % 11 === 0) g.fillRect(i, gy + 8 + (Math.floor(cam + i) % 5) * 4, 2, 2); }
-      for (const c of cans) if (!c.got) { const X = Math.round(c.x - cam), Y = Math.round(h(c.x)) - 12; g.fillStyle = '#000'; g.fillRect(X - 4, Y - 1, 9, 11); g.fillStyle = '#e8231e'; g.fillRect(X - 3, Y, 7, 9); g.fillStyle = '#ffd23c'; g.fillRect(X - 1, Y + 3, 3, 3); g.fillRect(X + 1, Y - 2, 2, 2); }
-      g.save(); g.translate(Math.round(x - cam), Math.round(y) - 4); g.rotate(ang); const R = (a, b, w, hh, c) => { g.fillStyle = c; g.fillRect(a, b, w, hh); };
-      R(-10, -2, 7, 7, '#000'); R(4, -2, 7, 7, '#000'); R(-8, 0, 3, 3, '#aab4c2'); R(6, 0, 3, 3, '#aab4c2'); R(-7, -5, 14, 4, '#e8231e'); R(-7, -5, 14, 1, '#ff8a7a'); R(3, -8, 2, 4, '#12101c'); R(-3, -11, 5, 6, '#3f6ad0'); R(-2, -15, 5, 5, '#ffd23c'); R(1, -14, 2, 2, '#12101c'); g.restore();
-      g.fillStyle = '#000'; g.fillRect(7, 7, 64, 8); g.fillStyle = '#3a2030'; g.fillRect(8, 8, 62, 6); g.fillStyle = fuel > 25 ? '#ffd23c' : '#e8231e'; g.fillRect(8, 8, Math.round(62 * fuel / 100), 6); }
+    draw(g) { const K = Art, cam = x - 70; g.drawImage(K.T.sky(240, 160, ['#ff7a4a', '#ffb060', '#ffe6a8']), 0, 0); K.put(g, K.ball(12, '#fff6c8'), 180, 34);
+      for (let i = 0; i < 240; i += 2) { const a = 74 + Math.sin((i + cam * .2) * .03) * 14 + Math.sin((i + cam * .2) * .011) * 8; K.box(g, i, a, 2, 90, '#d87a50'); K.box(g, i, a, 2, 2, '#f0a070'); }
+      for (let i = 0; i < 240; i += 2) { const a = 96 + Math.sin((i + cam * .45) * .045 + 2) * 10; K.box(g, i, a, 2, 70, '#a04e38'); K.box(g, i, a, 2, 2, '#c8704a'); }
+      for (let i = 0; i < 240; i += 2) { const wx = Math.floor((cam + i) / 2), gy = Math.round(h(cam + i)); K.box(g, i, gy, 2, 160 - gy, '#5a3418'); K.box(g, i, gy + 3, 2, 7, '#7a4a26'); K.box(g, i, gy, 2, 3, '#3fb45a'); K.box(g, i, gy, 2, 1, '#a8f0a0'); K.box(g, i, gy + 3, 2, 1, '#1f6a2a'); if (wx * 7 % 11 === 0) K.box(g, i, gy + 12 + (wx % 5) * 5, 2, 2, '#3a2010'); if (wx * 5 % 17 === 0) K.box(g, i, gy + 18 + (wx % 4) * 6, 2, 1, '#8a623a'); if (wx % 23 === 0) K.box(g, i, gy - 2, 1, 2, '#58b96a'); }
+      const can = K.spr('mhcan', 10, 12, q => { K.rr(q, -5, -4, 10, 10, 2, K.lin(q, -5, 0, 5, 0, '#ff8a7a', '#e8231e', '#7a1410')); K.box(q, 0, -6, 4, 2, '#5c6678'); K.box(q, -2, -1, 4, 4, '#ffd23c'); });
+      for (const c of cans) if (!c.got) K.put(g, can, c.x - cam, h(c.x) - 9);
+      K.shadow(g, x - cam, h(x) + 1, 10, 2); g.save(); g.translate(Math.round(x - cam), Math.round(y)); g.rotate(ang); const bk = K.bike(); g.drawImage(bk, -(bk.width >> 1), -bk.height + 1); g.restore();
+      K.box(g, 6, 6, 68, 10, '#140e1c'); K.box(g, 7, 7, 66, 8, '#3a2030'); K.box(g, 8, 8, Math.round(64 * fuel / 100), 6, fuel > 25 ? '#ffd23c' : '#e8231e'); K.box(g, 8, 8, Math.round(64 * fuel / 100), 2, fuel > 25 ? '#fff6c8' : '#ff8a7a'); for (let i = 1; i < 4; i++) K.box(g, 7 + i * 16, 7, 1, 8, '#140e1c'); }
   };
 } });

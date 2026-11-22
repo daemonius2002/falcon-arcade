@@ -20,9 +20,12 @@ init(A) {
     update(dt) { if (A.ptr.moved && A.ptr.y < 286) ang = Math.atan2(A.ptr.y - 296, A.ptr.x - 120); if (A.keys.left) ang -= 1.6 * dt; if (A.keys.right) ang += 1.6 * dt; ang = Math.max(-Math.PI + .2, Math.min(-.2, ang));
       if (!ball) return; for (let i = 0; i < 4 && ball; i++) { ball.x += ball.vx * dt / 4; ball.y += ball.vy * dt / 4; if (ball.x < 12) { ball.x = 12; ball.vx = Math.abs(ball.vx); } if (ball.x > 228) { ball.x = 228; ball.vx = -Math.abs(ball.vx); }
         let hit = ball.y <= 12; if (!hit) for (const k of g0.keys()) if ((cx(k >> 4, k & 15) - ball.x) ** 2 + (cy(k >> 4) - ball.y) ** 2 < 440) { hit = true; break; } if (hit) land(); } },
-    draw(g) { g.fillStyle = '#12101c'; g.fillRect(0, 0, 240, 320); g.fillStyle = '#1b1830'; for (let y = 0; y < 320; y += 16) for (let x = (y / 16 % 2) * 16; x < 240; x += 32) g.fillRect(x, y, 16, 16); g.fillStyle = '#e8231e'; for (let x = 0; x < 240; x += 8) g.fillRect(x, 268, 4, 1);
-      for (const [k, v] of g0) g.drawImage(IMG[v], cx(k >> 4, k & 15) - 12, cy(k >> 4) - 12);
-      let x = 120, y = 296, vx = Math.cos(ang) * 14, vy = Math.sin(ang) * 14; g.fillStyle = '#d6dbea'; for (let i = 0; i < 12; i++) { x += vx; y += vy; if (x < 12 || x > 228) vx = -vx; if (i > 0) g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2); }
-      if (ball) g.drawImage(IMG[ball.c], Math.round(ball.x) - 12, Math.round(ball.y) - 12); g.drawImage(IMG[cur], 108, 284); g.drawImage(SM[nxt], 150, 298); }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx(), n: g0.size, last: null }); K.scroll(g, K.T.panel(64, 64, '#2a2458'), 0, 0, 240, 320); K.box(g, 0, 0, 240, 2, '#59627a');
+      for (let x = 0; x < 240; x += 8) K.box(g, x, 268, 4, 2, '#e8231e');
+      if (g0.size < S.n - 1 && S.last) S.F.spark(S.last[0], S.last[1], ['#ffffff', '#ffd23c', '#5fe3d6'], 22, 120); S.n = g0.size; if (ball) S.last = [ball.x, ball.y];
+      for (const [k, v] of g0) { const x = cx(k >> 4, k & 15), y = cy(k >> 4); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x - 9, y - 7, 20, 18); K.put(g, K.ball(11, COL[v]), x, y); }
+      let x = 120, y = 296, vx = Math.cos(ang) * 14, vy = Math.sin(ang) * 14; for (let i = 0; i < 12; i++) { x += vx; y += vy; if (x < 12 || x > 228) vx = -vx; if (i > 0) { K.box(g, Math.round(x) - 2, Math.round(y) - 2, 4, 4, '#140e1c'); K.box(g, Math.round(x) - 1, Math.round(y) - 1, 2, 2, '#ffffff'); } }
+      K.put(g, K.spr('bbbase', 44, 20, q => { K.part(q, [-22, 10, -14, -8, 14, -8, 22, 10], K.lin(q, -22, 0, 22, 0, '#aab4c2', '#5c6678', '#2a2f3d')); K.box(q, -12, -5, 24, 2, '#f2f5f8'); }), 120, 308);
+      if (ball) K.put(g, K.ball(11, COL[ball.c]), ball.x, ball.y); K.put(g, K.ball(11, COL[cur]), 120, 296); K.put(g, K.ball(6, COL[nxt]), 156, 306); S.F.draw(g); }
   };
 } });

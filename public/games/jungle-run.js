@@ -17,13 +17,15 @@ init(A) {
       for (const it of items) if (!it.got && Math.abs(it.x - pl.x - 4) < 9 && Math.abs(it.y - pl.y - 6) < 11) { it.got = 1; A.add(10); A.beep(1000, .05, 'triangle'); }
       for (const f of foes) { if (f.dead) continue; f.x += f.d * 22 * dt; if (f.x < f.l || f.x > f.r) f.d *= -1; if (Math.abs(f.x + 5 - pl.x - 4) < 8 && Math.abs(f.y + 4 - pl.y - 6) < 10) { if (pl.vy > 40 && pb < f.y + 5) { f.dead = 1; pl.vy = -170; A.add(50); A.beep(300, .08); } else { A.beep(150, .3, 'sawtooth'); A.over(); return; } } }
       const d = Math.floor(pl.x / 16); if (d > far) { A.add(d - far); far = d; } if (pl.y > 200) { A.beep(150, .3, 'sawtooth'); A.over(); } },
-    draw(g) { g.save(); g.translate(0, -40); ['#0f3a2a', '#145238', '#1b6a44'].forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * 60, 240, 60); });
-      for (let i = -1; i < 7; i++) { const x = i * 44 - (cam * .3) % 44; g.fillStyle = '#0c2a1e'; g.fillRect(x + 16, 40, 8, 140); g.fillRect(x, 24, 40, 30); g.fillRect(x + 6, 14, 28, 12); }
-      for (let i = -1; i < 5; i++) { const x = i * 70 - (cam * .6) % 70; g.fillStyle = '#0f4a2e'; g.fillRect(x + 20, 70, 10, 110); g.fillRect(x, 50, 50, 30); g.fillRect(x + 8, 38, 34, 14); }
-      for (const p of plats) { const x = Math.round(p.x - cam); if (p.g) { g.fillStyle = '#5a3418'; g.fillRect(x, p.y, p.w, 60); g.fillStyle = '#3a2010'; for (let k = 6; k < p.w - 4; k += 14) g.fillRect(x + k, p.y + 10 + (k % 3) * 6, 4, 3); g.fillStyle = '#3fb45a'; g.fillRect(x, p.y, p.w, 5); g.fillStyle = '#8ff08a'; g.fillRect(x, p.y, p.w, 1); g.fillStyle = '#1f7a2a'; for (let k = 3; k < p.w; k += 9) g.fillRect(x + k, p.y + 5, 3, 2); }
-        else { g.fillStyle = '#2a1608'; g.fillRect(x, p.y, p.w, 8); g.fillStyle = '#9a6a34'; g.fillRect(x + 1, p.y + 1, p.w - 2, 3); g.fillStyle = '#6a3e1c'; g.fillRect(x + 1, p.y + 4, p.w - 2, 3); } }
-      for (const it of items) if (!it.got) { const x = Math.round(it.x - cam); g.fillStyle = '#000'; g.fillRect(x - 4, it.y - 4, 8, 8); g.fillStyle = '#ff8a1e'; g.fillRect(x - 3, it.y - 3, 6, 6); g.fillStyle = '#ffd98a'; g.fillRect(x - 3, it.y - 3, 2, 2); g.fillStyle = '#3fd45a'; g.fillRect(x, it.y - 6, 2, 3); }
-      for (const f of foes) if (!f.dead) { const x = Math.round(f.x - cam), y = f.y; g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, 12, 9); g.fillStyle = '#b06ae0'; g.fillRect(x, y, 10, 7); g.fillStyle = '#e0c0ff'; g.fillRect(x + 2, y + 1, 5, 2); g.fillStyle = '#ffd98a'; g.fillRect(f.d > 0 ? x + 9 : x - 2, y + 3, 3, 4); g.fillStyle = '#12101c'; g.fillRect(f.d > 0 ? x + 10 : x - 1, y + 4, 1, 1); }
-      const X = Math.round(pl.x - cam), Y = Math.round(pl.y); if (pl.f < 0) { g.save(); g.translate(X + 8, Y); g.scale(-1, 1); g.drawImage(HERO, 0, 0); g.restore(); } else g.drawImage(HERO, X, Y); g.restore(); }
+    draw(g) { const K = Art, HO = { id: 'jr', skin: '#f0b890', shirt: '#3fa8e0', pants: '#5a4a6a', hat: 'cap', hatc: '#e8231e' }, t = performance.now() / 1000; g.save(); g.translate(0, -40);
+      g.drawImage(K.T.sky(160, 180, ['#0f3a2a', '#1b6a44', '#5ab86a']), 0, 0);
+      for (let i = -1; i < 6; i++) { const x = i * 40 - (cam * .25) % 40; K.box(g, x + 17, 70, 6, 110, '#0c2a1e'); K.put(g, K.tree(16, (i + Math.floor(cam * .25 / 40)) & 3), x + 20, 62, { a: .55 }); }
+      for (let i = -1; i < 5; i++) { const x = i * 58 - (cam * .5) % 58, v = (i + Math.floor(cam * .5 / 58)) & 3; K.box(g, x + 25, 84, 8, 100, '#3a2412'); K.box(g, x + 25, 84, 2, 100, '#5a3a20'); K.put(g, K.tree(18, v), x + 29, 74); }
+      const dt = K.T.dirt(64, 64);
+      for (const p of plats) { const x = Math.round(p.x - cam); if (x > 170 || x + p.w < -10) continue; if (p.g) { for (let xx = 0; xx < p.w; xx += 64) g.drawImage(dt, 0, 0, Math.min(64, p.w - xx), 50, x + xx, p.y, Math.min(64, p.w - xx), 50); K.box(g, x, p.y, 1, 50, '#2a180a'); K.box(g, x + p.w - 1, p.y, 1, 50, '#2a180a'); K.box(g, x, p.y, p.w, 5, '#3fb45a'); K.box(g, x, p.y, p.w, 1, '#a8f0a0'); K.box(g, x, p.y + 5, p.w, 1, '#1f6a2a'); for (let k = 2; k < p.w - 2; k += 7) K.box(g, x + k, p.y + 5, 3, 2 + (k % 3), '#2f8a3a'); for (let k = 5; k < p.w - 4; k += 13) K.box(g, x + k, p.y - 2, 1, 2, '#58b96a'); }
+        else { K.box(g, x + 2, p.y + 8, p.w, 4, 'rgba(0,0,0,.25)'); K.put(g, K.log(p.w), x + p.w / 2, p.y + 5); } }
+      items.forEach((it, i) => { if (!it.got) K.put(g, K.fruit(i % 4), it.x - cam, it.y + Math.round(Math.sin(t * 4 + i) * 1.5)); });
+      for (const f of foes) if (!f.dead) K.put(g, K.snail(), f.x - cam + 5, f.y + 3, f.d < 0 ? { flip: 1 } : null);
+      const mv = A.keys.left || A.keys.right; K.put(g, K.guy(HO, !pl.on ? 3 : mv ? 1 + Math.floor(pl.x / 7) % 2 : 0), pl.x - cam + 4, pl.y - 2, pl.f < 0 ? { flip: 1 } : null); g.restore(); }
   };
 } });

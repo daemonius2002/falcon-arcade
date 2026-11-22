@@ -1,4 +1,4 @@
-// Falcon Arcade v0.2.0 - zero-dependency static file server for Hangar / any Node host.
+// Falcon Arcade v0.3.0 - zero-dependency static file server for Hangar / any Node host.
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, 'public'), PORT = process.env.PORT || 3000;
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.ico': 'image/x-icon', '.svg': 'image/svg+xml' };
@@ -17,4 +17,4 @@ http.createServer((req, res) => {
       res.end(req.method === 'HEAD' ? undefined : data);
     });
   });
-}).listen(PORT, '0.0.0.0', () => console.log('Falcon Arcade v0.2.0 listening on port ' + PORT));
+}).listen(PORT, '0.0.0.0', () => console.log('Falcon Arcade v0.3.0 listening on port ' + PORT));

@@ -21,9 +21,11 @@ init(A) {
         if (!r.dead && inv <= 0 && (s.x - r.x) ** 2 + (s.y - r.y) ** 2 < (r.r + 5) ** 2) { lives--; boom(s.x, s.y, 24, '#ffd23c'); A.beep(120, .4, 'sawtooth'); info(); if (lives <= 0) { A.over(); return; } reset(); } }
       rocks = rocks.filter(r => !r.dead); shots = shots.filter(b => b.l > 0); for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.l -= dt; } parts = parts.filter(p => p.l > 0);
       if (!rocks.length) { A.add(100); wave(); } },
-    draw(g) { g.fillStyle = '#070a1c'; g.fillRect(0, 0, W, H); for (const t of stars) { g.fillStyle = ['#56658f', '#9fb4e6', '#ffffff'][t[2]]; g.fillRect(t[0], t[1], 1, 1); }
-      for (const r of rocks) { g.beginPath(); r.p.forEach((q, i) => { const a = r.rot + i / r.p.length * TAU; g.lineTo(r.x + Math.cos(a) * r.r * q, r.y + Math.sin(a) * r.r * q); }); g.closePath(); g.fillStyle = '#6a5c50'; g.fill(); g.strokeStyle = '#c4b4a0'; g.lineWidth = 1; g.stroke(); }
-      g.fillStyle = '#ffd23c'; for (const b of shots) g.fillRect(b.x - 1, b.y - 1, 3, 3); for (const p of parts) { g.fillStyle = p.c; g.fillRect(p.x, p.y, 2, 2); }
-      if (inv <= 0 || Math.floor(inv * 10) % 2) { g.save(); g.translate(s.x, s.y); g.rotate(s.a); g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, -6); g.lineTo(-3, 0); g.lineTo(-6, 6); g.closePath(); g.fillStyle = '#f2f5f8'; g.fill(); g.strokeStyle = '#ff8a2a'; g.lineWidth = 1; g.stroke(); g.fillStyle = '#5fe3d6'; g.fillRect(-1, -1, 3, 3); g.restore(); } }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx() }); K.scroll(g, K.T.space(128, 128), 0, 0, W, H);
+      for (const r of K.gone(S, 'rk', rocks)) { S.F.boom(r.x, r.y, r.sz > 2); S.F.spark(r.x, r.y, ['#c4b4a0', '#8a7a6a', '#ffd23c'], 8, 90); }
+      for (const r of rocks) { if (r.v == null) r.v = K.ri(0, 2); K.put(g, K.rock(r.r, r.v), r.x, r.y, { rot: Math.round(r.rot * 4) / 4 }); }
+      for (const b of shots) { K.box(g, Math.round(b.x) - 2, Math.round(b.y) - 2, 5, 5, '#c8501e'); K.box(g, Math.round(b.x) - 1, Math.round(b.y) - 1, 3, 3, '#fff6c8'); } for (const p of parts) K.box(g, Math.round(p.x), Math.round(p.y), 2, 2, p.c);
+      if (inv <= 0 || Math.floor(inv * 10) % 2) { if (A.keys.up) K.put(g, K.fire(Math.floor(performance.now() / 60) % 2), s.x - Math.cos(s.a) * 12, s.y - Math.sin(s.a) * 12, { rot: s.a - Math.PI / 2 }); K.put(g, K.ship(1), s.x, s.y, { rot: s.a }); }
+      S.F.draw(g); }
   };
 } });

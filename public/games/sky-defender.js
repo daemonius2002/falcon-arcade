@@ -15,11 +15,15 @@ init(A) {
         for (const b of sh) if (!b.dead && (b.x - e.x) ** 2 + (b.y - e.y) ** 2 < 64) { b.dead = e.dead = 1; A.add(10 * lvl); A.beep(220, .08, 'sawtooth'); boom(e.x, e.y, 10, '#ffd23c'); if (++kills % 12 === 0) { lvl++; info(); } break; }
         if (!e.dead && e.y >= 276) { e.dead = 1; boom(e.x, 280, 16, '#ff8a1e'); A.beep(110, .3, 'sawtooth'); let bi = -1, bd = 30; BX.forEach((x, i) => { const dd = Math.abs(x + 12 - e.x); if (city[i] && dd < bd) { bd = dd; bi = i; } }); if (bi >= 0) { city[bi] = 0; info(); if (!city.some(v => v)) { A.over(); return; } } } }
       en = en.filter(e => !e.dead); sh = sh.filter(b => !b.dead); for (const p of fx) { p.x += p.vx * dt; p.y += p.vy * dt; p.l -= dt; } fx = fx.filter(p => p.l > 0); },
-    draw(g) { ['#0a0c24', '#12143a', '#1c1a4a', '#2a1f5a'].forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * 70, 240, 80); }); g.fillStyle = '#d6dbea'; for (const s of stars) g.fillRect(s[0], s[1], 1, 1); g.fillStyle = '#f2efe6'; g.fillRect(190, 30, 14, 14); g.fillStyle = '#12143a'; g.fillRect(186, 28, 10, 12);
-      g.fillStyle = '#1b1e29'; g.fillRect(0, 296, 240, 24); g.fillStyle = '#3a4152'; g.fillRect(0, 296, 240, 2);
-      BX.forEach((x, i) => { if (!city[i]) { g.fillStyle = '#2a2f3d'; g.fillRect(x + 2, 290, 20, 6); g.fillRect(x + 6, 286, 6, 4); return; } const h = 22 + (i * 7) % 16; g.fillStyle = '#000'; g.fillRect(x - 1, 295 - h, 26, h + 1); g.fillStyle = '#4a52a0'; g.fillRect(x, 296 - h, 24, h); g.fillStyle = '#7a84d0'; g.fillRect(x, 296 - h, 24, 2); g.fillStyle = '#ffd98a'; for (let yy = 300 - h; yy < 292; yy += 6) for (let xx = x + 3; xx < x + 22; xx += 6) if ((xx + yy + i) % 5) g.fillRect(xx, yy, 3, 3); });
-      g.fillStyle = '#aab4c2'; for (let i = 2; i < 7; i++) g.fillRect(Math.round(TX + Math.cos(ang) * i * 3) - 2, Math.round(TY + Math.sin(ang) * i * 3) - 2, 4, 4); g.fillStyle = '#000'; g.fillRect(TX - 11, TY - 7, 22, 12); g.fillStyle = '#5c6678'; g.fillRect(TX - 10, TY - 6, 20, 10); g.fillStyle = '#e8231e'; g.fillRect(TX - 4, TY - 4, 8, 6);
-      for (const e of en) { const x = Math.round(e.x), y = Math.round(e.y); g.fillStyle = '#000'; g.fillRect(x - 4, y - 5, 8, 10); g.fillStyle = '#e8231e'; g.fillRect(x - 3, y - 4, 6, 8); g.fillStyle = '#ff8a7a'; g.fillRect(x - 3, y - 4, 2, 4); g.fillStyle = '#ffd23c'; g.fillRect(x - 1, y + 3, 2, 2); }
-      g.fillStyle = '#ffd23c'; for (const b of sh) g.fillRect(b.x - 1, b.y - 1, 3, 3); for (const p of fx) { g.fillStyle = p.c; g.fillRect(p.x, p.y, 2, 2); } }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx() }); g.drawImage(K.T.sky(240, 320, ['#0a0c24', '#1c1a4a', '#4a2a6a', '#9a4a5a']), 0, 0);
+      for (const q of stars) K.box(g, q[0], q[1], 1, 1, q[0] % 3 ? '#d6dbea' : '#ffffff'); K.put(g, K.ball(9, '#f2efe6'), 196, 40); K.box(g, 190, 36, 3, 3, '#c8c4b8'); K.box(g, 199, 43, 2, 2, '#c8c4b8');
+      for (let i = 0; i < 9; i++) { const h = 20 + (i * 37) % 30; K.box(g, i * 28 - 6, 296 - h, 24, h, '#1c1640'); K.box(g, i * 28 + 2, 290 - h, 8, 6, '#1c1640'); }
+      K.box(g, 0, 296, 240, 24, '#12141c'); K.box(g, 0, 296, 240, 2, '#59627a'); K.box(g, 0, 298, 240, 1, '#2a2f3d');
+      BX.forEach((x, i) => { if (!city[i]) { K.put(g, K.rock(7, i % 3, '#4a5462'), x + 12, 292); K.put(g, K.rock(4, (i + 1) % 3, '#4a5462'), x + 4, 294); return; } const h = 22 + (i * 7) % 16; K.put(g, K.building(24, h, i), x + 12, 296 - h / 2 - 3); });
+      for (const e of K.gone(S, 'en', en)) S.F.boom(e.x, e.y, 0);
+      const gun = K.spr('sdgun', 18, 6, q => { K.box(q, -9, -3, 18, 6, K.lin(q, 0, -3, 0, 3, '#f2f5f8', '#aab4c2', '#4a5462')); K.box(q, 6, -3, 3, 6, '#e8231e'); }); K.put(g, gun, TX + Math.cos(ang) * 9, TY + Math.sin(ang) * 9, { rot: ang });
+      K.put(g, K.spr('sdbase', 26, 14, q => { K.part(q, [-13, 7, -9, -3, 9, -3, 13, 7], K.lin(q, -13, 0, 13, 0, '#aab4c2', '#5c6678', '#2a2f3d')); K.ell(q, 0, -3, 6, 5, K.lin(q, -6, 0, 6, 0, '#ff8a7a', '#e8231e', '#7a1410')); }), TX, TY);
+      for (const e of en) K.put(g, K.bomb(), e.x, e.y, { rot: Math.atan2(e.vy, e.vx) - Math.PI / 2 });
+      for (const b of sh) { K.box(g, Math.round(b.x) - 2, Math.round(b.y) - 2, 5, 5, '#c8501e'); K.box(g, Math.round(b.x) - 1, Math.round(b.y) - 1, 3, 3, '#fff6c8'); } for (const p of fx) K.box(g, Math.round(p.x), Math.round(p.y), 2, 2, p.c); S.F.draw(g); }
   };
 } });

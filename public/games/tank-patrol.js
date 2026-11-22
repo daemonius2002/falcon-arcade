@@ -25,10 +25,11 @@ init(A) {
         else if (inv <= 0 && Math.abs(pl.x - b.x) < 7 && Math.abs(pl.y - b.y) < 7) { b.dead = 1; lives--; boom(pl.x, pl.y, '#ffd23c'); A.beep(120, .4, 'sawtooth'); if (lives <= 0) { info(); A.over(); return; } pl.x = 120; pl.y = GH * T - 8; pl.d = 0; inv = 2; info(); } }
       en = en.filter(e => !e.dead); sh = sh.filter(b => !b.dead); for (const p of fx) { p.x += p.vx * dt; p.y += p.vy * dt; p.l -= dt; } fx = fx.filter(p => p.l > 0);
       if (left <= 0) { lvl++; A.add(300); A.beep(880, .3, 'triangle'); gen(); } },
-    draw(g) { g.fillStyle = '#1a1a14'; g.fillRect(0, 0, 240, 320); g.fillStyle = '#22221a'; for (let y = 0; y < GH; y++) for (let x = y % 2; x < GW; x += 2) g.fillRect(x * T, y * T, T, T);
-      for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const v = m[y][x], X = x * T, Y = y * T; if (v === 1) { g.fillStyle = '#b5522a'; g.fillRect(X, Y, T, T); g.fillStyle = '#5a2610'; g.fillRect(X, Y + 7, T, 1); g.fillRect(X, Y + 15, T, 1); g.fillRect(X + 7, Y, 1, 7); g.fillRect(X + 3, Y + 8, 1, 7); g.fillRect(X + 11, Y + 8, 1, 7); g.fillStyle = '#e09a62'; g.fillRect(X, Y, T, 1); }
-        else if (v === 2) { g.fillStyle = '#8a94a4'; g.fillRect(X, Y, T, T); g.fillStyle = '#d6dbea'; g.fillRect(X, Y, T, 2); g.fillRect(X, Y, 2, T); g.fillStyle = '#4a5462'; g.fillRect(X, Y + 14, T, 2); g.fillRect(X + 14, Y, 2, T); g.fillRect(X + 6, Y + 6, 4, 4); } }
-      for (const e of en) tank(g, e, '#e8231e', '#ff8a7a'); if (inv <= 0 || Math.floor(inv * 10) % 2) tank(g, pl, '#3fd45a', '#c8ffb0');
-      for (const b of sh) { g.fillStyle = b.own ? '#ffd23c' : '#ff7a6a'; g.fillRect(b.x - 1, b.y - 1, 3, 3); } for (const p of fx) { g.fillStyle = p.c; g.fillRect(p.x, p.y, 2, 2); } }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx() }); K.scroll(g, K.T.dirt(64, 64), 0, 0, 240, 320); g.fillStyle = 'rgba(10,8,4,.3)'; g.fillRect(0, 0, 240, 320);
+      const bk = K.tex('tpbrick', 16, 16, { base: '#b5522a', blobs: [['#d8703a', .5, 3, 5, 9], ['#7a3418', .5, 3, 5, 9]], L: 8, post: q => { for (const y of [0, 8]) { K.box(q, 0, y, 16, 1, '#e09a62'); K.box(q, 0, y + 7, 16, 1, '#4a1e0c'); } K.box(q, 7, 0, 1, 8, '#4a1e0c'); K.box(q, 3, 8, 1, 8, '#4a1e0c'); K.box(q, 11, 8, 1, 8, '#4a1e0c'); } });
+      for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const v = m[y][x]; if (!v) continue; K.box(g, x * T + 2, y * T + 3, T, T, 'rgba(0,0,0,.3)'); if (v === 1) g.drawImage(bk, x * T, y * T); else { g.drawImage(K.block(16, 16, '#9aa4b4'), x * T, y * T); for (const [a, c] of [[3, 3], [11, 3], [3, 11], [11, 11]]) K.box(g, x * T + a, y * T + c, 2, 2, '#4a5462'); } }
+      for (const e of K.gone(S, 'en', en)) S.F.boom(e.x, e.y, 1);
+      const tk = (t, c) => { K.shadow(g, t.x + 1, t.y + 2, 8, 7); K.put(g, K.tank(c), t.x, t.y, { rot: t.d * Math.PI / 2 }); }; for (const e of en) tk(e, '#e8231e'); if (inv <= 0 || Math.floor(inv * 10) % 2) tk(pl, '#3fd45a');
+      for (const b of sh) K.put(g, K.ball(2, b.own ? '#ffd23c' : '#ff7a6a'), b.x, b.y); for (const p of fx) K.box(g, Math.round(p.x), Math.round(p.y), 2, 2, p.c); S.F.draw(g); }
   };
 } });

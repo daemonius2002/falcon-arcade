@@ -16,11 +16,15 @@ init(A) {
         k.x = Math.max(4, Math.min(236, k.x + Math.cos(k.a) * k.v * dt)); k.y = Math.max(4, Math.min(236, k.y + Math.sin(k.a) * k.v * dt)); }
       if (fin > 0) { fin -= dt; if (fin <= 0) { const p = pos(); A.add([1000, 600, 300, 100][p - 1] + Math.max(0, Math.round(300 - time * 3))); A.info('FINISHED: PLACE ' + p); A.over(p === 1); } return; }
       A.info('LAP ' + Math.min(3, Math.floor(Math.max(0, me.prog) / N) + 1) + '/3  PLACE ' + pos()); },
-    draw(g) { g.fillStyle = '#2f7a3a'; g.fillRect(0, 0, 240, 240); g.fillStyle = '#2a7034'; for (let y = 0; y < 240; y += 16) for (let x = (y / 16 % 2) * 16; x < 240; x += 32) g.fillRect(x, y, 16, 16);
-      const path = () => { g.beginPath(); P.forEach((p, i) => g[i ? 'lineTo' : 'moveTo'](p[0], p[1])); g.closePath(); }; g.lineJoin = g.lineCap = 'round';
-      path(); g.strokeStyle = '#f2f5f8'; g.lineWidth = 36; g.stroke(); g.setLineDash([8, 8]); g.strokeStyle = '#e8231e'; g.stroke(); g.setLineDash([]); path(); g.strokeStyle = '#3a3a44'; g.lineWidth = 30; g.stroke(); g.setLineDash([6, 10]); g.strokeStyle = '#6a6a78'; g.lineWidth = 1; g.stroke(); g.setLineDash([]);
-      const s0 = P[0], s1 = P[1], a = Math.atan2(s1[1] - s0[1], s1[0] - s0[0]); g.save(); g.translate(s0[0], s0[1]); g.rotate(a); for (let i = -15; i < 15; i += 3) { g.fillStyle = (i / 3 & 1) ? '#12101c' : '#ffffff'; g.fillRect(-2, i, 2, 3); g.fillStyle = (i / 3 & 1) ? '#ffffff' : '#12101c'; g.fillRect(0, i, 2, 3); } g.restore();
-      for (const k of karts.slice().reverse()) { g.save(); g.translate(k.x, k.y); g.rotate(k.a); g.fillStyle = '#000'; g.fillRect(-6, -4, 12, 8); g.fillStyle = '#12101c'; g.fillRect(-5, -5, 3, 10); g.fillRect(2, -5, 3, 10); g.fillStyle = k.c; g.fillRect(-5, -3, 10, 6); g.fillStyle = '#ffffff'; g.fillRect(1, -2, 3, 4); g.fillStyle = '#f0b890'; g.fillRect(-2, -1, 3, 3); g.restore(); }
-      if (count > 0) A.text(g, Math.ceil(count), 120, 100, '#ffffff', 8, 'center'); }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx() });
+      if (!S.bg) { const k = K.mkc(240, 240), q = k.getContext('2d'); K.scroll(q, K.T.grass(64, 64), 0, 0, 240, 240); const ly = K.mkc(240, 240), l = ly.getContext('2d'), path = () => { l.beginPath(); P.forEach((p, i) => l[i ? 'lineTo' : 'moveTo'](p[0], p[1])); l.closePath(); }; l.lineJoin = l.lineCap = 'round';
+        path(); l.strokeStyle = '#140e1c'; l.lineWidth = 40; l.stroke(); path(); l.strokeStyle = '#f2f5f8'; l.lineWidth = 37; l.stroke(); l.setLineDash([9, 9]); l.strokeStyle = '#e8231e'; l.stroke(); l.setLineDash([]); path(); l.strokeStyle = '#3a3a44'; l.lineWidth = 30; l.stroke(); K.pix(ly, null, 6);
+        l.globalCompositeOperation = 'source-atop'; l.globalAlpha = .5; K.scroll(l, K.T.road(64, 64), 0, 0, 240, 240); l.globalAlpha = 1; l.globalCompositeOperation = 'source-over'; q.drawImage(ly, 0, 0);
+        for (let i = 0; i < N; i += 3) { const p = P[i], n = P[(i + 1) % N], a = Math.atan2(n[1] - p[1], n[0] - p[0]); K.box(q, Math.round(p[0] + Math.cos(a))- 1, Math.round(p[1] + Math.sin(a)) - 1, 2, 2, '#8a8a98'); }
+        const s0 = P[0], s1 = P[1], a = Math.atan2(s1[1] - s0[1], s1[0] - s0[0]); q.save(); q.translate(s0[0], s0[1]); q.rotate(a); for (let i = -15; i < 15; i += 3) { K.box(q, -2, i, 2, 3, (i / 3 & 1) ? '#12101c' : '#ffffff'); K.box(q, 0, i, 2, 3, (i / 3 & 1) ? '#ffffff' : '#12101c'); } q.restore();
+        for (let i = 0, n = 0; i < 400 && n < 26; i++) { const x = K.rnd(8, 232), y = K.rnd(8, 232); if (P.every(p => (p[0] - x) ** 2 + (p[1] - y) ** 2 > 28 * 28)) { n++; K.shadow(q, x + 3, y + 5, 8, 5); K.put(q, K.tree(n % 3 ? 9 : 7, n % 4), x, y); } } S.bg = k; }
+      g.drawImage(S.bg, 0, 0);
+      for (const k of karts.slice().reverse()) { K.shadow(g, k.x + 1, k.y + 2, 5, 4); K.put(g, K.kart(k.c), k.x, k.y, { rot: k.a + Math.PI / 2 }); if (k === me) { K.box(g, Math.round(k.x) - 1, Math.round(k.y) - 13, 3, 3, '#140e1c'); K.box(g, Math.round(k.x), Math.round(k.y) - 12, 1, 1, '#ffd23c'); } }
+      if (count > 0) { A.text(g, Math.ceil(count), 123, 103, '#140e1c', 8, 'center'); A.text(g, Math.ceil(count), 120, 100, '#ffd23c', 8, 'center'); } }
   };
 } });

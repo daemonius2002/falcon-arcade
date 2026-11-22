@@ -19,11 +19,12 @@ init(A) {
     key(k) { hold = 0; if (k === 'left') mv(-1); else if (k === 'right') mv(1); else if (k === 'up') rot(); else if (k === 'down') { down(); t = 0; } else if (k === 'a') { while (down()); t = 0; } }, tap() { rot(); },
     update(dt) { if (!cur) return; if (A.keys.left || A.keys.right) { hold += dt; if (hold > .2) { hold -= .07; mv(A.keys.left ? -1 : 1); } }
       t += dt; const iv = A.keys.down ? .04 : Math.max(.08, .62 - lvl * .05); if (t >= iv) { t = 0; down(); } },
-    draw(g) { g.fillStyle = '#12101c'; g.fillRect(0, 0, 120, 216); g.fillStyle = '#1b1830'; for (let y = 0; y < 18; y++) for (let x = 0; x < 10; x++) g.fillRect(x * 12 + 5, y * 12 + 5, 2, 2);
-      for (let y = 0; y < 18; y++) for (let x = 0; x < 10; x++) if (f[y][x] >= 0) cell(g, x * 12, y * 12, COL[f[y][x]], 12);
-      if (cur) for (const p of cur.c) if (cur.y + p[1] >= 0) cell(g, (cur.x + p[0]) * 12, (cur.y + p[1]) * 12, COL[cur.t], 12);
-      g.fillStyle = '#1b1e29'; g.fillRect(120, 0, 60, 216); g.fillStyle = '#59627a'; g.fillRect(120, 0, 2, 216);
-      A.text(g, 'NEXT', 151, 10, '#b9bfd0', 2, 'center'); g.fillStyle = '#12101c'; g.fillRect(128, 26, 46, 30); for (const p of SH[nx]) cell(g, 144 + p[0] * 10 - (nx ? 0 : 5), 31 + p[1] * 10 + (nx ? 0 : 5), COL[nx], 10);
-      A.text(g, 'LINES', 151, 74, '#b9bfd0', 2, 'center'); A.text(g, lines, 151, 90, '#ffd23c', 3, 'center'); A.text(g, 'LEVEL', 151, 122, '#b9bfd0', 2, 'center'); A.text(g, lvl, 151, 138, '#5fe3d6', 3, 'center'); }
+    draw(g) { const K = Art; K.scroll(g, K.T.brick(64, 64, '#231d3a'), 0, 0, 120, 216); g.fillStyle = 'rgba(6,4,14,.6)'; g.fillRect(0, 0, 120, 216); g.fillStyle = 'rgba(255,255,255,.045)'; for (let x = 1; x < 10; x++) g.fillRect(x * 12, 0, 1, 216); for (let y = 1; y < 18; y++) g.fillRect(0, y * 12, 120, 1);
+      for (let y = 0; y < 18; y++) for (let x = 0; x < 10; x++) if (f[y][x] >= 0) g.drawImage(K.block(12, 12, COL[f[y][x]]), x * 12, y * 12);
+      if (cur) { let gy = cur.y; while (fits(cur.c, cur.x, gy + 1)) gy++; g.fillStyle = 'rgba(255,255,255,.22)'; for (const p of cur.c) { const X = (cur.x + p[0]) * 12, Y = (gy + p[1]) * 12; if (Y >= 0) { g.fillRect(X, Y, 12, 1); g.fillRect(X, Y + 11, 12, 1); g.fillRect(X, Y, 1, 12); g.fillRect(X + 11, Y, 1, 12); } }
+        for (const p of cur.c) if (cur.y + p[1] >= 0) g.drawImage(K.block(12, 12, COL[cur.t]), (cur.x + p[0]) * 12, (cur.y + p[1]) * 12); }
+      g.drawImage(K.T.panel(60, 216, '#262a40'), 120, 0); K.box(g, 120, 0, 2, 216, '#59627a'); K.box(g, 122, 0, 1, 216, '#12141c');
+      A.text(g, 'NEXT', 151, 10, '#b9bfd0', 2, 'center'); K.box(g, 127, 25, 48, 32, '#59627a'); K.box(g, 128, 26, 46, 30, '#0e0c18'); for (const p of SH[nx]) g.drawImage(K.block(10, 10, COL[nx]), 144 + p[0] * 10 - (nx ? 0 : 5), 31 + p[1] * 10 + (nx ? 0 : 5));
+      A.text(g, 'LINES', 151, 74, '#b9bfd0', 2, 'center'); A.text(g, lines, 152, 91, '#000000', 3, 'center'); A.text(g, lines, 151, 90, '#ffd23c', 3, 'center'); A.text(g, 'LEVEL', 151, 122, '#b9bfd0', 2, 'center'); A.text(g, lvl, 152, 139, '#000000', 3, 'center'); A.text(g, lvl, 151, 138, '#5fe3d6', 3, 'center'); }
   };
 } });

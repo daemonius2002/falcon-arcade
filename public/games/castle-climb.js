@@ -24,12 +24,14 @@ init(A) {
         if (pl.f === 5 && Math.abs(pl.x - door) < 8) { lvl++; A.add(200); A.beep(880, .3, 'triangle'); gen(); return; } }
       else { pl.cp += ((k.up ? 1 : 0) - (k.down ? 1 : 0)) * 1.7 * dt; if (pl.cp >= 1) { pl.f++; pl.st = 0; pl.cp = 0; if (pl.f > top) { top = pl.f; A.add(10); } } else if (pl.cp <= 0) { pl.st = 0; pl.cp = 0; }
         if (pl.st === 1 && ((pl.cp < .2 && hitBy(pl.f)) || (pl.cp > .8 && hitBy(pl.f + 1)))) return die(); } },
-    draw(g) { g.fillStyle = '#2a2438'; g.fillRect(0, 0, 180, 280); g.fillStyle = '#231e30'; for (let y = 0; y < 280; y += 12) for (let x = (y / 12 % 2) * 12 - 12; x < 180; x += 24) { g.fillRect(x, y, 23, 1); g.fillRect(x, y, 1, 12); }
-      for (let i = 0; i < 6; i++) { const y = FY(i); g.fillStyle = '#000'; g.fillRect(0, y, 180, 8); g.fillStyle = '#8a94a4'; g.fillRect(0, y, 180, 6); g.fillStyle = '#d6dbea'; g.fillRect(0, y, 180, 1); g.fillStyle = '#4a5462'; for (let x = 10; x < 180; x += 20) g.fillRect(x, y + 1, 1, 5);
-        if (i < 5) { const x = lad[i]; g.fillStyle = '#6a3e1c'; g.fillRect(x - 6, y - 44, 2, 44); g.fillRect(x + 4, y - 44, 2, 44); g.fillStyle = '#c89a5a'; for (let r = 4; r < 44; r += 7) g.fillRect(x - 5, y - r, 10, 2); } }
-      const dy = FY(5); g.fillStyle = '#000'; g.fillRect(door - 9, dy - 23, 18, 23); g.fillStyle = '#6a3e1c'; g.fillRect(door - 8, dy - 20, 16, 20); g.fillRect(door - 6, dy - 22, 12, 2); g.fillStyle = '#9a6a34'; g.fillRect(door - 8, dy - 20, 2, 20); g.fillStyle = '#ffd23c'; g.fillRect(door + 3, dy - 10, 2, 2);
-      for (const c of coins) if (!c.got) { const y = FY(c.f) - 10; g.fillStyle = '#000'; g.fillRect(c.x - 4, y - 4, 8, 8); g.fillStyle = '#ffd23c'; g.fillRect(c.x - 3, y - 3, 6, 6); g.fillStyle = '#fff6c8'; g.fillRect(c.x - 3, y - 3, 2, 2); }
-      for (const b of fire) { const x = Math.round(b.x), y = FY(b.f) - 9, f = Math.floor(tm * 10) % 2; g.fillStyle = '#7a1410'; g.fillRect(x - 5, y - 1 - f, 10, 10 + f); g.fillStyle = '#ff8a1e'; g.fillRect(x - 4, y - f, 8, 8 + f); g.fillStyle = '#ffe27a'; g.fillRect(x - 2, y + 3, 4, 4); }
-      if (dead <= 0 || Math.floor(dead * 12) % 2) { const X = Math.round(pl.x) - 8, Y = Math.round(FY(pl.f) - 24 - pl.jh - pl.cp * 44); if (pl.dir < 0) { g.save(); g.translate(X + 16, Y); g.scale(-1, 1); g.drawImage(KN, 0, 0, 16, 24); g.restore(); } else g.drawImage(KN, X, Y, 16, 24); } }
+    draw(g) { const K = Art, KO = { id: 'cc', skin: '#f0b890', shirt: '#3f6ad0', pants: '#8a94a4', hat: 'helmet', hatc: '#e8231e', belt: '#ffd23c' }, f = Math.floor(tm * 8);
+      K.scroll(g, K.T.brick(64, 64, '#3a3050'), 0, 0, 180, 280); g.fillStyle = 'rgba(10,6,20,.3)'; g.fillRect(0, 0, 180, 280);
+      for (let i = 0; i < 6; i++) { const y = FY(i), tx = i % 2 ? 150 : 30; K.box(g, tx - 6, y - 34, 12, 16, '#140e1c'); K.box(g, tx - 5, y - 33, 10, 14, '#1b2a55'); K.box(g, tx - 5, y - 33, 10, 2, '#3a4a9a'); K.box(g, tx, y - 33, 1, 14, '#140e1c');
+        const wx = i % 2 ? 60 : 120; g.fillStyle = 'rgba(255,170,60,.13)'; g.beginPath(); g.arc(wx, y - 26, 16, 0, 7); g.fill(); K.box(g, wx - 1, y - 22, 3, 6, '#5a3418'); K.put(g, K.fire((f + i) % 2), wx, y - 28, { sc: .5 });
+        for (let x = 0; x < 180; x += 20) g.drawImage(K.block(20, 8, '#9aa4b4'), x, y);
+        if (i < 5) { const x = lad[i]; K.box(g, x - 7, y - 44, 3, 44, '#3a2010'); K.box(g, x + 4, y - 44, 3, 44, '#3a2010'); K.box(g, x - 6, y - 44, 1, 44, '#c08a4a'); K.box(g, x + 5, y - 44, 1, 44, '#c08a4a'); for (let r = 4; r < 44; r += 7) { K.box(g, x - 5, y - r, 10, 2, '#d8aa6a'); K.box(g, x - 5, y - r + 2, 10, 1, '#5a3418'); } } }
+      K.put(g, K.door('#9a6a34'), door, FY(5) - 12); for (const c of coins) if (!c.got) K.put(g, K.coin((f + c.f) % 4), c.x, FY(c.f) - 10);
+      for (const b of fire) { g.fillStyle = 'rgba(255,140,40,.16)'; g.beginPath(); g.arc(b.x, FY(b.f) - 7, 11, 0, 7); g.fill(); K.put(g, K.fire(f % 2), b.x, FY(b.f) - 7, b.d < 0 ? { flip: 1 } : null); }
+      if (dead <= 0 || Math.floor(dead * 12) % 2) { const fy = FY(pl.f) - pl.jh - pl.cp * 44, mv = A.keys.left || A.keys.right; K.put(g, K.guy(KO, pl.st ? 1 + Math.floor(pl.cp * 8) % 2 : pl.jh > 0 ? 3 : mv ? 1 + Math.floor(pl.x / 6) % 2 : 0), pl.x, fy - 14, pl.dir < 0 ? { flip: 1 } : null); } }
   };
 } });

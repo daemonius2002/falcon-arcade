@@ -13,9 +13,8 @@ init(A) {
   add(); add(); A.info('BIGGEST ' + Math.max(...b));
   return {
     key(k) { if (k !== 'a') move(k); }, update() {},
-    draw(g) { g.fillStyle = '#12141c'; g.fillRect(0, 0, 180, 180);
-      b.forEach((v, i) => { const x = 4 + (i % 4) * 44, y = 4 + Math.floor(i / 4) * 44, n = v ? Math.min(12, Math.log2(v)) : 0; g.fillStyle = COL[n]; g.fillRect(x, y, 40, 40);
-        if (!v) return; g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(x, y, 40, 2); g.fillRect(x, y, 2, 40); g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(x, y + 38, 40, 2); g.fillRect(x + 38, y, 2, 40);
-        const s = String(v), sc = s.length < 3 ? 3 : s.length < 5 ? 2 : 1; A.text(g, s, x + 20, y + 20 - sc * 2.5, DARK.includes(n) ? '#12141c' : '#ffffff', sc, 'center'); }); }
+    draw(g) { const K = Art; K.scroll(g, K.T.panel(64, 64, '#2a2458'), 0, 0, 180, 180); K.box(g, 0, 0, 180, 2, '#59627a'); K.box(g, 0, 178, 180, 2, '#0e0c18');
+      b.forEach((v, i) => { const x = 4 + (i % 4) * 44, y = 4 + Math.floor(i / 4) * 44, n = v ? Math.min(12, Math.log2(v)) : 0; K.box(g, x, y, 40, 40, 'rgba(0,0,0,.34)'); K.box(g, x, y + 39, 40, 1, 'rgba(255,255,255,.08)'); if (!v) return;
+        K.box(g, x + 2, y + 3, 40, 40, 'rgba(0,0,0,.3)'); g.drawImage(K.block(40, 40, COL[n], 'r'), x, y); const s = String(v), sc = s.length < 3 ? 3 : s.length < 5 ? 2 : 1, dk = DARK.includes(n); A.text(g, s, x + 21, y + 21 - sc * 2.5, dk ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.45)', sc, 'center'); A.text(g, s, x + 20, y + 20 - sc * 2.5, dk ? '#12141c' : '#ffffff', sc, 'center'); }); }
   };
 } });

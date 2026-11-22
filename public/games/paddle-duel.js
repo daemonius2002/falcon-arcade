@@ -19,11 +19,10 @@ init(A) {
         if (b.vy > 0 && b.y >= 296 && b.y <= 305 && Math.abs(b.x - bx) < pw / 2 + 3) { b.y = 295; hit(bx, -1); }
         if (b.vy < 0 && b.y <= 24 && b.y >= 15 && Math.abs(b.x - tx) < pw / 2 + 3) { b.y = 25; hit(tx, 1); } }
       if (b.y < -8) { sb++; A.add(100); point(1); } else if (b.y > 328) { stp++; point(-1); } },
-    draw(g) { g.fillStyle = '#0f3a2a'; g.fillRect(0, 0, 240, 320); g.fillStyle = '#145238'; for (let y = 0; y < 320; y += 16) for (let x = (y / 16 % 2) * 16; x < 240; x += 32) g.fillRect(x, y, 16, 16);
-      g.fillStyle = '#d6f5e6'; for (let x = 4; x < 240; x += 16) g.fillRect(x, 159, 8, 2); g.fillRect(0, 0, 240, 2); g.fillRect(0, 318, 240, 2); g.fillRect(0, 0, 2, 320); g.fillRect(238, 0, 2, 320);
-      A.text(g, stp, 120, 110, 'rgba(255,255,255,.22)', 8, 'center'); A.text(g, sb, 120, 176, 'rgba(255,255,255,.22)', 8, 'center');
-      const pd = (x, y, c1, c2) => { x = Math.round(x - pw / 2); g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, pw + 2, 9); g.fillStyle = c1; g.fillRect(x, y, pw, 7); g.fillStyle = c2; g.fillRect(x, y, pw, 2); };
-      pd(tx, 14, '#e8231e', '#ff8a7a'); pd(bx, 300, '#2fc4ba', '#c8fffa');
-      const x = Math.round(b.x), y = Math.round(b.y); g.fillStyle = '#000'; g.fillRect(x - 4, y - 4, 8, 8); g.fillStyle = '#fff'; g.fillRect(x - 3, y - 3, 6, 6); }
+    draw(g) { const K = Art, S = this.S || (this.S = { F: K.fx(), tr: [] }); K.scroll(g, K.T.stone(64, 64, '#123a4a'), 0, 0, 240, 320);
+      K.box(g, 0, 0, 240, 3, '#5fe3d6'); K.box(g, 0, 317, 240, 3, '#5fe3d6'); K.box(g, 0, 0, 3, 320, '#5fe3d6'); K.box(g, 237, 0, 3, 320, '#5fe3d6'); for (let x = 6; x < 236; x += 16) K.box(g, x, 159, 8, 2, '#c8fffa'); K.box(g, 96, 136, 48, 1, '#2f8a9a'); K.box(g, 96, 183, 48, 1, '#2f8a9a'); K.box(g, 96, 136, 1, 48, '#2f8a9a'); K.box(g, 143, 136, 1, 48, '#2f8a9a');
+      A.text(g, stp, 122, 102, 'rgba(0,0,0,.35)', 8, 'center'); A.text(g, stp, 120, 100, '#ff8a7a', 8, 'center'); A.text(g, sb, 122, 182, 'rgba(0,0,0,.35)', 8, 'center'); A.text(g, sb, 120, 180, '#5fe3d6', 8, 'center');
+      K.shadow(g, tx + 2, 23, pw / 2, 2); K.put(g, K.paddle(pw, '#e8231e'), tx, 18); K.shadow(g, bx + 2, 309, pw / 2, 2); K.put(g, K.paddle(pw, '#2fc4ba'), bx, 304);
+      S.tr.push([b.x, b.y]); if (S.tr.length > 7) S.tr.shift(); S.tr.forEach((q, i) => { g.fillStyle = `rgba(200,255,250,${i / 16})`; g.fillRect(Math.round(q[0]) - 2, Math.round(q[1]) - 2, 4, 4); }); K.put(g, K.ball(4, '#ffffff'), b.x, b.y); S.F.draw(g); }
   };
 } });
