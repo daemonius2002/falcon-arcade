@@ -32,9 +32,14 @@ const icon = (c, s) => `<svg aria-hidden="true" width="${s}" height="${s}" viewB
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* ---------- storage (this browser only) ---------- */
-const db = { name: 'Player 1', fav: {}, scores: {}, mute: 0 };
+/* v0.4 adds plays (rounds started per game), recent (last played ids) and time (seconds played per game); older saves just lack them */
+const db = { name: 'Player 1', fav: {}, scores: {}, mute: 0, plays: {}, recent: [], time: {} };
 try { Object.assign(db, JSON.parse(localStorage.getItem('falcon-arcade')) || {}); } catch (e) {}
+for (const k of ['fav', 'scores', 'plays', 'time']) if (!db[k] || typeof db[k] !== 'object') db[k] = {};
+if (!Array.isArray(db.recent)) db.recent = [];
 const save = () => { try { localStorage.setItem('falcon-arcade', JSON.stringify(db)); } catch (e) {} };
+const bestOf = id => ((db.scores[id] || [])[0] || { s: 0 }).s;
+function played(id) { db.plays[id] = (db.plays[id] || 0) + 1; db.recent = [id].concat(db.recent.filter(x => x !== id)).slice(0, 8); save(); }
 
 /* ---------- sound ---------- */
 let ac = null;
@@ -62,30 +67,43 @@ function shape(t, col, n) { const key = t + col + n; if (SHC[key]) return SHC[ke
 let view, cur = '', killers = [], raf = 0;
 function on(t, ev, fn, o) { t.addEventListener(ev, fn, o); killers.push(() => t.removeEventListener(ev, fn, o)); }
 function stop() { cancelAnimationFrame(raf); killers.forEach(f => f()); killers = []; }
-function card(g) { const ok = isReady(g.id), c = g.cat, href = g.id === 'star-falcon' ? 'games/star-falcon/index.html' : '#' + g.id;
+const favBtn = (g, fv) => `<button type="button" class="fvb${fv ? ' on' : ''}" data-fav="${g.id}" aria-pressed="${fv}" aria-label="Favourite ${g.name}" title="Favourite">${fv ? '★' : '☆'}</button>`;
+function card(g) { const ok = isReady(g.id), c = g.cat, href = g.id === 'star-falcon' ? 'games/star-falcon/index.html' : '#' + g.id, b = bestOf(g.id);
   const th = ok ? `<img class="th" alt="" loading="lazy" src="thumbs/${g.id}.png">` : `<div class="th ph" style="background:${c.bg}">${icon(c, 72)}</div>`;
-  const body = `${th}<b>${g.name}</b><span>${g.desc}</span><i class="bd${ok ? ' ok' : ''}">${ok ? 'PLAY' : 'COMING SOON'}</i>`, s = esc((g.name + ' ' + g.desc + ' ' + c.name).toLowerCase());
-  return ok ? `<a class="card" href="${href}" data-s="${s}">${body}</a>` : `<div class="card off" data-s="${s}">${body}</div>`; }
-function home() { stop(); cur = 'home'; document.body.classList.remove('ingame'); const favs = Object.keys(db.fav).filter(id => db.fav[id] && GAMES[id]), n = Object.keys(GAMES).filter(isReady).length;
+  const body = `${th}<b>${g.name}</b><span>${g.desc}</span><div class="cf"><i class="bd${ok ? ' ok' : ''}">${ok ? 'PLAY' : 'COMING SOON'}</i>${b ? `<em class="bs">BEST ${b}</em>` : ''}</div>`, s = esc((g.name + ' ' + g.desc + ' ' + c.name).toLowerCase());
+  return `<div class="cw" data-s="${s}">` + (ok ? `<a class="card" href="${href}" data-id="${g.id}" data-s="${s}">${body}</a>` + favBtn(g, !!db.fav[g.id]) : `<div class="card off" data-s="${s}">${body}</div>`) + '</div>'; }
+/* personal rows on the home page: recently played + favourites */
+function rowsHtml() { const row = (id, t, blurb, ids) => ids.length ? `<section class="cat row" id="${id}"><div class="ch"><h2>${t}</h2><span>${blurb}</span></div><div class="grid">${ids.map(i => card(GAMES[i])).join('')}</div></section>` : '';
+  return row('recent', 'CONTINUE PLAYING', 'Jump back in', db.recent.filter(id => GAMES[id] && isReady(id)).slice(0, 6))
+    + row('favourites', 'FAVOURITES', 'Your picks on this device', Object.keys(db.fav).filter(id => db.fav[id] && GAMES[id])); }
+function title(t) { document.title = t ? t + ' — Falcon Arcade' : 'Falcon Arcade — pixel games for kids'; }
+function home() { stop(); cur = 'home'; title(); document.body.classList.remove('ingame'); const n = Object.keys(GAMES).filter(isReady).length;
   view.innerHTML = `<section class="hero" id="hero"><div class="hl"><span class="tag">FEATURED</span><h1>STAR FALCON</h1>
     <p>Fly the white-and-orange fighter through 8 pixel worlds, buy upgrades in the hangar and beat a boss at the end of every stage.</p>
     <div class="facts"><span>8 stages</span><span>6 upgrades</span><span>Easy · Normal · Hard</span><span>Phone + PC</span></div>
     <a class="big" href="games/star-falcon/index.html">PLAY NOW</a></div>
     <div class="hr"><img alt="Star Falcon, Earth Orbit stage" src="thumbs/sf-orbit.png"><img alt="Star Falcon, Blue Archipelago stage" src="thumbs/star-falcon.png"><img alt="Star Falcon, Lava World stage" src="thumbs/sf-lava.png"></div></section>`
-    + (favs.length ? `<section class="cat" id="favourites"><div class="ch"><h2>FAVOURITES</h2><span>Your picks on this device</span></div><div class="grid">${favs.map(id => card(GAMES[id])).join('')}</div></section>` : '')
+    + rowsHtml()
     + CATS.map(c => `<section class="cat" id="${c.id}"><div class="ch"><span class="ci" style="background:${c.bg}">${icon(c, 40)}</span><h2>${c.name.toUpperCase()}</h2><span>${c.blurb}</span></div><div class="grid">${c.games.map(card).join('')}</div></section>`).join('')
     + `<p class="empty" id="empty" hidden>No game matches your search.</p>`;
   $('foot').textContent = `Falcon Arcade ${VER} · ${n} of ${Object.keys(GAMES).length} games playable · scores and favourites are saved in this browser`; filter(); }
 function filter() { if (cur !== 'home') return; const q = $('q').value.trim().toLowerCase(); let any = false;
-  view.querySelectorAll('.cat').forEach(s => { let n = 0; s.querySelectorAll('.card').forEach(c => { const m = !q || c.dataset.s.includes(q); c.hidden = !m; if (m) n++; }); s.hidden = !n; if (n) any = true; });
+  view.querySelectorAll('.cat').forEach(s => { let n = 0; s.querySelectorAll('.cw').forEach(c => { const m = !q || c.dataset.s.includes(q); c.hidden = !m; if (m) n++; });
+    if (q && s.classList.contains('row')) n = 0; /* personal rows would only duplicate search results */ s.hidden = !n; if (n) any = true; });
   $('hero').hidden = !!q; $('empty').hidden = any; }
-function scoresHtml(id) { const l = db.scores[id] || []; return l.length ? `<table><thead><tr><th>#</th><th>Player</th><th class="r">Score</th></tr></thead><tbody>${l.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.n)}</td><td class="r">${s.s}</td></tr>`).join('')}</tbody></table>` : '<p class="sm">No scores yet. Be the first!</p>'; }
-function gameView(id) { stop(); cur = 'game'; document.body.classList.add('ingame'); const def = DEFS[id], G = GAMES[id], c = G.cat;
+function scoresHtml(id, hi) { const l = db.scores[id] || []; return l.length ? `<table><thead><tr><th>#</th><th>Player</th><th class="r">Score</th></tr></thead><tbody>${l.map((s, i) => `<tr${i + 1 === hi ? ' class="me"' : ''}><td>${i + 1}</td><td>${esc(s.n)}</td><td class="r">${s.s}</td></tr>`).join('')}</tbody></table>` : '<p class="sm">No scores yet. Be the first!</p>'; }
+const fmtTime = s => s < 60 ? Math.round(s) + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : (s / 3600).toFixed(1) + ' h';
+function statsHtml() { const ids = Object.keys(GAMES), pl = id => db.plays[id] || 0, sum = o => ids.reduce((a, id) => a + (+o[id] || 0), 0);
+  const tried = ids.filter(id => pl(id) || bestOf(id)).sort((a, b) => pl(b) - pl(a) || bestOf(b) - bestOf(a)), rounds = sum(db.plays);
+  const rank = rounds < 5 ? 'ROOKIE' : rounds < 25 ? 'PILOT' : rounds < 80 ? 'ACE' : 'LEGEND', tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  return `<p class="rank">RANK: <b>${rank}</b></p><div class="tiles">${tile(tried.length + '/' + ids.length, 'games tried')}${tile(rounds, 'rounds played')}${tile(fmtTime(sum(db.time)), 'time played')}${tile(ids.filter(id => db.fav[id]).length, 'favourites')}</div>`
+    + (tried.length ? `<table><thead><tr><th>Game</th><th class="r">Rounds</th><th class="r">Best</th></tr></thead><tbody>${tried.slice(0, 8).map(id => `<tr><td>${id === 'star-falcon' ? GAMES[id].name : `<a href="#${id}">${GAMES[id].name}</a>`}</td><td class="r n">${pl(id)}</td><td class="r">${bestOf(id) || '-'}</td></tr>`).join('')}</tbody></table>` : '<p class="sm">Play a game and your stats will show up here.</p>'); }
+function gameView(id) { stop(); cur = 'game'; document.body.classList.add('ingame'); const def = DEFS[id], G = GAMES[id], c = G.cat; title(G.name);
   view.innerHTML = `<div class="gv"><section class="stage" id="stage"><div class="stin" style="--r:${(def.w / def.h).toFixed(4)}">
       <div class="gbar"><span>SCORE <b id="gS">0</b></span><span id="gI"></span><span>BEST <b id="gB">0</b></span></div>
       <div class="bezel"><canvas id="gc"></canvas><div id="gO" class="gov"></div></div>
       <div class="pad" id="pad" hidden></div>
-      <div class="btns"><button id="bRe" type="button">Restart</button><button id="bSn" type="button"></button><button id="bFs" type="button">Full screen</button><button id="bFv" type="button"></button></div>
+      <div class="btns"><button id="bPa" type="button" disabled>Pause</button><button id="bRe" type="button">Restart</button><button id="bSn" type="button"></button><button id="bFs" type="button">Full screen</button><button id="bFv" type="button"></button></div>
     </div></section>
     <div class="side"><a class="chip" href="#${c.id}" style="background:${c.fg}">${c.name.toUpperCase()}</a><h1>${G.name.toUpperCase()}</h1><p class="lead">${G.desc}.</p>
       <section class="box"><h2 class="cy">HOW TO PLAY</h2><p>${def.help}</p></section>
@@ -96,22 +114,33 @@ function gameView(id) { stop(); cur = 'game'; document.body.classList.add('ingam
 
 /* ---------- engine ---------- */
 function run(id, def) { const cv = $('gc'), g = cv.getContext('2d'), W = def.w, H = def.h, ov = $('gO'); cv.width = W; cv.height = H; cv.style.aspectRatio = W + '/' + H; g.imageSmoothingEnabled = false;
-  let inst = null, st = 'ready', last = 0, paused = false, overAt = 0;
-  const best = () => ((db.scores[id] || [])[0] || { s: 0 }).s;
+  let inst = null, st = 'ready', last = 0, paused = false, overAt = 0, secs = 0;
+  const best = () => bestOf(id);
+  const flush = () => { if (secs >= 1) { db.time[id] = Math.round((db.time[id] || 0) + secs); secs = 0; save(); } }; killers.push(flush);
+  const ui = () => { const b = $('bPa'); b.disabled = st !== 'play'; b.textContent = paused ? 'Resume' : 'Pause'; b.classList.toggle('on', paused); };
+  function setPause(v) { if (st !== 'play' || paused === v) return; paused = v; ui();
+    if (v) { flush(); ov.innerHTML = '<h2>PAUSED</h2><p>Tap RESUME or press P.</p><button class="big" id="gRs" type="button">RESUME</button><button id="gGo" type="button">Restart</button>'; ov.hidden = false; try { $('gRs').focus({ preventScroll: true }); } catch (e) {} }
+    else { ov.hidden = true; last = 0; } }
+  const CONF = ['#ffd23c', '#ff9a2a', '#5fe3d6', '#ff8a9a'], confetti = () => '<div class="conf" aria-hidden="true">' + CONF.concat(CONF, CONF, CONF).map((c, i) => `<i style="left:${3 + i * 6}%;background:${c};animation-delay:${(i * 7 % 10) / 10}s"></i>`).join('') + '</div>';
   const A = { w: W, h: H, keys: {}, raw: {}, ptr: { x: W / 2, y: H / 2, down: false, moved: false }, ptrs: [], score: 0,
     rnd: (a, b) => a + Math.random() * (b - a), ri: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
     add(n) { A.score += n; $('gS').textContent = A.score; }, info(s) { $('gI').textContent = s; }, beep, text, spr, shape, mix,
-    over(win) { if (st !== 'play') return; st = 'over'; overAt = performance.now(); const nb = A.score > best();
-      if (A.score > 0) { db.scores[id] = (db.scores[id] || []).concat({ n: db.name, s: A.score }).sort((a, b) => b.s - a.s).slice(0, 5); save(); $('gT').innerHTML = scoresHtml(id); $('gB').textContent = best(); }
-      beep(win ? 880 : 180, .4, win ? 'triangle' : 'sawtooth', .06); panel(win ? 'YOU WIN!' : 'GAME OVER', `Score ${A.score}` + (nb && A.score > 0 ? ' — new best!' : ''), 'PLAY AGAIN'); } };
-  function panel(t, p, b) { ov.innerHTML = `<h2>${t}</h2><p>${p}</p><button class="big" id="gGo" type="button">${b}</button>`; ov.hidden = false; }
-  function begin() { audio(); A.score = 0; $('gS').textContent = 0; $('gI').textContent = ''; A.keys = {}; A.raw = {}; paused = false; inst = def.init(A); st = 'play'; ov.hidden = true; }
+    over(win) { if (st !== 'play') return; st = 'over'; overAt = performance.now(); flush(); ui(); const nb = A.score > 0 && A.score > best(), old = best(); let rank = 0, l = db.scores[id] || [];
+      if (A.score > 0) { const me = { n: db.name, s: A.score }; l = db.scores[id] = l.concat(me).sort((a, b) => b.s - a.s).slice(0, 5); rank = l.indexOf(me) + 1; save(); $('gT').innerHTML = scoresHtml(id, rank); $('gB').textContent = best(); }
+      beep(win ? 880 : 180, .4, win ? 'triangle' : 'sawtooth', .06); if (nb) [660, 880, 1320].forEach((f, i) => setTimeout(() => beep(f, .16, 'square', .05), 420 + i * 130));
+      const note = nb ? `<p class="rk nb">★ NEW BEST! ★</p>` + (old ? `<p class="sm">Old best ${old}</p>` : '') + confetti()
+        : rank ? `<p class="rk">#${rank} in your top 5 · best ${old}</p>` : A.score > 0 ? `<p class="rk">${l[l.length - 1].s - A.score + 1} more for the top 5</p>` : old ? `<p class="rk">Best ${old}</p>` : '';
+      panel(win ? 'YOU WIN!' : 'GAME OVER', `Score ${A.score}`, 'PLAY AGAIN', note); } };
+  function panel(t, p, b, x) { ov.innerHTML = `<h2>${t}</h2><p>${p}</p>${x || ''}<button class="big" id="gGo" type="button">${b}</button>`; ov.hidden = false; }
+  function begin() { audio(); flush(); played(id); A.score = 0; $('gS').textContent = 0; $('gI').textContent = ''; A.keys = {}; A.raw = {}; paused = false; inst = def.init(A); st = 'play'; ov.hidden = true; ui(); }
   $('gB').textContent = best(); inst = def.init(A); panel(GAMES[id].name.toUpperCase(), 'Tap START or press Space.', 'START');
-  on(ov, 'click', e => { if (e.target.closest('#gGo')) begin(); });
+  on(ov, 'click', e => { if (e.target.closest('#gGo')) begin(); else if (e.target.closest('#gRs')) setPause(false); });
+  on($('bPa'), 'click', () => setPause(!paused));
   const KM = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', ' ': 'a', Enter: 'a' }; if (!def.arrowsOnly) Object.assign(KM, { a: 'left', d: 'right', w: 'up', s: 'down' });
   on(window, 'keydown', e => { if (e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey) return; const r = e.key.length === 1 ? e.key.toLowerCase() : e.key, k = KM[r]; A.raw[r] = true;
+    if (k && paused && st === 'play') { if (k !== 'a' || e.target.tagName !== 'BUTTON') e.preventDefault(); return; } /* paused: nothing reaches the game, Space/Enter still press the focused button */
     if (k) { e.preventDefault(); if (st !== 'play') { if (k === 'a' && !e.repeat && performance.now() - overAt > 700) begin(); return; } if (!e.repeat) { A.keys[k] = true; if (inst.key) inst.key(k); } }
-    else if (r === 'p' && st === 'play') { paused = !paused; if (paused) panel('PAUSED', 'Press P to continue.', 'RESTART'); else ov.hidden = true; } });
+    else if (r === 'p' && st === 'play') setPause(!paused); });
   on(window, 'keyup', e => { const r = e.key.length === 1 ? e.key.toLowerCase() : e.key; A.raw[r] = false; if (KM[r]) A.keys[KM[r]] = false; });
   const P = new Map(), pos = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }, sync = () => { A.ptrs = [...P.values()]; };
   const dirOf = (dx, dy) => Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
@@ -128,17 +157,44 @@ function run(id, def) { const cv = $('gc'), g = cv.getContext('2d'), W = def.w, 
   const snd = () => { $('bSn').textContent = db.mute ? 'Sound off' : 'Sound on'; }, fav = () => { $('bFv').textContent = db.fav[id] ? '★ Favourite' : '☆ Favourite'; $('bFv').classList.toggle('on', !!db.fav[id]); }; snd(); fav();
   on($('bRe'), 'click', begin); on($('bSn'), 'click', () => { db.mute = db.mute ? 0 : 1; save(); snd(); audio(); }); on($('bFv'), 'click', () => { db.fav[id] = !db.fav[id]; save(); fav(); });
   on($('bFs'), 'click', () => { try { if (document.fullscreenElement) document.exitFullscreen(); else { const p = $('stage').requestFullscreen(); if (p && p.catch) p.catch(() => {}); } } catch (e) {} });
-  on(document, 'visibilitychange', () => { if (document.hidden && st === 'play' && !paused) { paused = true; panel('PAUSED', 'Press P to continue.', 'RESTART'); } });
-  function loop(ts) { const dt = Math.min(.033, (ts - last) / 1000 || 0); last = ts; if (st === 'play' && !paused) inst.update(dt); inst.draw(g); A.ptr.moved = false; raf = requestAnimationFrame(loop); }
+  on(document, 'visibilitychange', () => { if (document.hidden) setPause(true); }); on(window, 'pagehide', flush);
+  if (!$('stage').requestFullscreen) $('bFs').hidden = true; /* e.g. iPhone Safari */
+  function loop(ts) { const dt = Math.min(.033, (ts - last) / 1000 || 0); last = ts; if (st === 'play' && !paused) { secs += dt; inst.update(dt); } inst.draw(g); A.ptr.moved = false; raf = requestAnimationFrame(loop); }
   raf = requestAnimationFrame(loop); }
+
+/* ---------- home-screen icon + web app manifest, drawn at runtime (no extra files, no service worker) ---------- */
+function appIcons() { try { const head = document.head, link = (rel, href, ex) => { const l = document.createElement('link'); l.rel = rel; l.href = href; Object.assign(l, ex || {}); head.appendChild(l); };
+  const png = n => { const k = mkc(n, n), g = k.getContext('2d'), u = n / 16; g.fillStyle = '#1b1e29'; g.fillRect(0, 0, n, n); g.translate(2 * u, 2 * u); g.scale(u, u); g.fillStyle = '#ff9a2a'; g.fill(new Path2D(IC.shooters)); g.fillStyle = '#5fe3d6'; g.fillRect(5, 4, 2, 3); return k.toDataURL('image/png'); };
+  const url = location.origin + location.pathname, ic = n => ({ src: png(n), sizes: n + 'x' + n, type: 'image/png', purpose: 'any maskable' });
+  const man = { name: 'Falcon Arcade', short_name: 'Falcon Arcade', description: 'Pixel games for kids: shooters, platformers, puzzles, racing, sports and classics.', start_url: url, scope: url, display: 'standalone', orientation: 'any', background_color: '#0d0b14', theme_color: '#1b1e29', icons: [ic(192), ic(512)] };
+  link('apple-touch-icon', png(180)); link('manifest', 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man))); } catch (e) {} }
 
 /* ---------- router ---------- */
 function route() { const h = location.hash.slice(1); if (DEFS[h]) return gameView(h); if (cur !== 'home') home(); const el = h && $(h); if (el && !el.hidden) el.scrollIntoView(); else scrollTo(0, 0); }
 window.Arcade = { game(id, def) { DEFS[id] = def; },
   boot() { view = $('view'); $('nav').innerHTML = CATS.map(c => `<a href="#${c.id}">${c.name}</a>`).join('');
-    const pb = $('pb'), dlg = $('dlg'), nm = $('nm'); pb.textContent = db.name;
-    pb.addEventListener('click', () => { nm.value = db.name; if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); nm.select(); });
-    $('nf').addEventListener('submit', e => { e.preventDefault(); db.name = nm.value.trim().slice(0, 14) || 'Player 1'; save(); pb.textContent = db.name; if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); });
+    const pb = $('pb'), dlg = $('dlg'), nm = $('nm'), pst = $('pst'), shut = () => { if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); }; pb.textContent = db.name;
+    pb.addEventListener('click', () => { nm.value = db.name; if (pst) pst.innerHTML = statsHtml(); if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); nm.select(); });
+    $('nf').addEventListener('submit', e => { e.preventDefault(); db.name = nm.value.trim().slice(0, 14) || 'Player 1'; save(); pb.textContent = db.name; shut(); });
+    dlg.addEventListener('click', e => { const r = dlg.getBoundingClientRect(), out = e.target === dlg && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom); if (out || e.target.closest('#dlgX, #pst a')) shut(); });
     $('q').addEventListener('input', () => { if (cur !== 'home') { location.hash = ''; home(); } filter(); });
+    $('q').addEventListener('keydown', e => { const c = e.key === 'Enter' && $('q').value.trim() && view.querySelector('.cw:not([hidden]) a.card'); if (c) c.click(); });
+    /* favourite stars on cards (home rows are rebuilt in place, keeping the tapped card where it was) */
+    view.addEventListener('click', e => { const b = e.target.closest('[data-fav]'); if (!b) return; const id = b.dataset.fav, y = b.getBoundingClientRect().top; db.fav[id] = !db.fav[id]; save();
+      if (cur === 'home') { view.querySelectorAll('.cat.row').forEach(s => s.remove()); $('hero').insertAdjacentHTML('afterend', rowsHtml()); filter(); }
+      const all = view.querySelectorAll(`[data-fav="${id}"]`); all.forEach(x => { if (x !== b) x.outerHTML = favBtn(GAMES[id], !!db.fav[id]); });
+      if (b.isConnected) { b.textContent = db.fav[id] ? '★' : '☆'; b.classList.toggle('on', !!db.fav[id]); b.setAttribute('aria-pressed', !!db.fav[id]); scrollBy(0, b.getBoundingClientRect().top - y); }
+      else { const o = view.querySelector(`[data-fav="${id}"]`); if (o) o.focus({ preventScroll: true }); } });
+    /* Star Falcon lives on its own page: count the visit when its link is followed */
+    document.addEventListener('click', e => { if (e.target.closest('a[href^="games/star-falcon"]')) played('star-falcon'); });
+    /* keyboard: "/" jumps to search, arrow keys walk the game cards on the home page */
+    addEventListener('keydown', e => { const t = e.target, tag = t.tagName; if (e.ctrlKey || e.metaKey || e.altKey || tag === 'INPUT' || dlg.open) return;
+      if (e.key === '/' && cur === 'home') { e.preventDefault(); $('q').focus(); return; }
+      const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d || cur !== 'home' || !t.matches || !t.matches('a.card')) return;
+      const r = t.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; let bst = null, bd = 1e9;
+      view.querySelectorAll('a.card').forEach(c => { if (c === t || !c.offsetParent) return; const q = c.getBoundingClientRect(), dx = q.left + q.width / 2 - cx, dy = q.top + q.height / 2 - cy, along = dx * d[0] + dy * d[1], across = Math.abs(dx * d[1]) + Math.abs(dy * d[0]);
+        if (along > 8 && along + across * 3 < bd) { bd = along + across * 3; bst = c; } });
+      if (bst) { e.preventDefault(); bst.focus(); bst.scrollIntoView({ block: 'nearest' }); } });
+    setTimeout(appIcons, 0);
     addEventListener('hashchange', route); route(); } };
 })();

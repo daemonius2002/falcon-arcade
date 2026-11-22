@@ -2,12 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Falcon Arcade</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Falcon Arcade — pixel games for kids</title>
+<meta name="description" content="Falcon Arcade: 30 free pixel games for kids — shooters, platformers, puzzles, racing, sports and classics. Plays in the browser on phone, tablet and PC. No sign-up, scores stay on your device.">
+<meta name="theme-color" content="#1b1e29">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Falcon Arcade">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Falcon Arcade">
+<meta property="og:title" content="Falcon Arcade — pixel games for kids">
+<meta property="og:description" content="30 free pixel games: shooters, platformers, puzzles, racing, sports and classics. Phone, tablet and PC.">
+<meta property="og:image" content="thumbs/star-falcon.png">
+<meta name="twitter:card" content="summary">
+<!-- favicon: the falcon ship as inline pixel SVG; the home-screen icon and web app manifest are drawn by arcade.js -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath d='M5 1h2v3h1v2h2v2h1v2H8v1H4v-1H1V8h1V6h2V4h1z' fill='%23ff9a2a'/%3E%3Cpath d='M5 4h2v3H5z' fill='%235fe3d6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="arcade.css">
 </head>
 <body>
+<a class="skip" href="#view">Skip to the games</a>
 <header class="top"><div>
   <a class="logo" href="#top">
     <svg aria-hidden="true" width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges"><path d="M5 1h2v3h1v2h2v2h1v2H8v1H4v-1H1V8h1V6h2V4h1z" fill="#ff9a2a"/><path d="M5 4h2v3H5z" fill="#5fe3d6"/></svg>
@@ -17,12 +33,18 @@
   <div class="tools">
     <label class="vh" for="q">Search games</label>
     <input id="q" type="search" placeholder="Search games" autocomplete="off">
-    <button id="pb" type="button" title="Change player name">Player 1</button>
+    <button id="pb" type="button" title="Player name and stats">Player 1</button>
   </div>
 </div></header>
-<main id="view"></main>
+<main id="view" tabindex="-1"></main>
+<noscript><p style="padding:24px">Falcon Arcade needs JavaScript to run the games.</p></noscript>
 <footer id="foot"></footer>
-<dialog id="dlg"><form id="nf"><label for="nm">PLAYER NAME</label><input id="nm" maxlength="14" autocomplete="off"><button class="big" type="submit">SAVE</button></form></dialog>
+<dialog id="dlg" aria-label="Player name and stats">
+  <form id="nf"><label for="nm">PLAYER NAME</label><div class="nr"><input id="nm" maxlength="14" autocomplete="off"><button class="big" type="submit">SAVE</button></div></form>
+  <h2 class="go">YOUR STATS</h2>
+  <div id="pst"></div>
+  <button id="dlgX" type="button">Close</button>
+</dialog>
 
 <script src="arcade.js"></script>
 <script src="art.js"></script>

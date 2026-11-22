@@ -69,3 +69,51 @@ dialog form{display:flex;flex-direction:column;gap:14px}dialog label{font:400 13
 @media(prefers-reduced-motion:reduce){a.card:hover{transform:none}}
 @media(max-width:600px){body.ingame #nav,body.ingame .tools{display:none}body.ingame main{padding-block:16px 0}}
 @media(pointer:coarse){.stin{max-width:calc(50dvh*var(--r) + 28px)}}
+/* ---- v0.4 shell additions ---- */
+/* keyboard focus + skip link */
+.skip{position:absolute;left:8px;top:-80px;z-index:9;background:var(--go);color:#0d0b14;padding:12px 14px;font:400 12px "Press Start 2P",monospace}.skip:focus{top:8px;color:#0d0b14}
+main:focus{outline:0}
+a.card:focus-visible{outline:4px solid var(--go);outline-offset:2px;background:#252a3a}
+#nav a:focus-visible,.logo:focus-visible{outline-offset:4px}
+/* cards: best score + favourite star */
+.cw{position:relative;display:flex}.cw>.card{flex:1}
+.cf{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:auto;padding-inline:4px}.cf .bd{margin:0}
+.bs{font:400 10px "Press Start 2P",monospace;color:var(--go)}
+.fvb{position:absolute;top:8px;right:8px;width:44px;min-height:44px;padding:0;font-size:22px;line-height:1;color:#fff;background:#0d0b14cc;box-shadow:0 0 0 2px #000}
+.fvb:active{box-shadow:0 0 0 2px #000}.fvb.on{color:var(--go)}.fvb:hover{background:#0d0b14}
+/* game page: pause, score highlight, game-over panel */
+button:disabled{opacity:.45;cursor:default}
+.gov{overflow:hidden}.gov>*{position:relative;z-index:1}
+.gov #gGo:not(.big){min-width:140px}
+.rk{font:400 11px/1.6 "Press Start 2P",monospace;color:var(--cy)}
+.rk.nb{color:var(--go);font-size:13px;animation:blink .5s steps(2) 6}
+tr.me td{color:#fff;box-shadow:inset 0 3px 0 var(--go),inset 0 -3px 0 var(--go)}tr.me td.r{color:var(--go)}
+.gov .conf{position:absolute;inset:0;z-index:0;pointer-events:none}.conf i{position:absolute;top:-10px;width:6px;height:6px;animation:fall 1.6s linear 2 both}
+@keyframes blink{50%{opacity:.25}}
+@keyframes fall{to{transform:translateY(120vh)}}
+/* player panel */
+dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+dialog[open]{display:flex;flex-direction:column;gap:16px}
+.nr{display:flex;gap:12px;align-items:center}.nr #nm{flex:1;width:auto}.nr .big{padding:14px 16px;font-size:12px}
+.rank{font:400 11px "Press Start 2P",monospace;color:var(--mut)}.rank b{font-weight:400;color:var(--or)}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-block:12px}
+.tiles div{background:var(--bg);padding:10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 0 0 2px #3a4152}.tiles b{font:400 14px "Press Start 2P",monospace;color:var(--go)}.tiles span{font-size:15px;color:var(--mut)}
+#pst a{text-decoration:underline}td.n{color:var(--ink)}
+/* notches / rounded screens */
+.top>div,main,footer{padding-left:max(16px,2vw,env(safe-area-inset-left));padding-right:max(16px,2vw,env(safe-area-inset-right))}
+.top>div{padding-top:max(14px,env(safe-area-inset-top))}
+footer{padding-bottom:max(36px,env(safe-area-inset-bottom))}
+.stage:fullscreen{padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+/* phones: one-line scrolling category bar, full-width search, shorter hero, tighter panels */
+@media(max-width:600px){
+  .top>div{gap:8px 12px;padding-block:10px}
+  #nav{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;scrollbar-width:none;gap:18px;font-size:18px;margin-inline:-4px;padding-inline:4px}#nav::-webkit-scrollbar{display:none}#nav a{flex:none;padding:8px 0}
+  .tools{flex:1 1 100%}#q{flex:1;width:auto}
+  main{padding-block:18px 0}
+  .hero{gap:18px}.hl{gap:14px;flex-basis:260px}.hr{flex-basis:260px;gap:10px}.hr img{aspect-ratio:4/5}
+  .row .cw:nth-child(n+5){display:none}
+  .gov{gap:10px}.gov .big{padding:14px 20px}
+  .fvb{top:6px;right:6px}
+}
+@media(max-width:350px){.logo{font-size:14px;gap:8px}.card b{font-size:18px}.card span{font-size:15px}.gbar{font-size:9px}.pad .ab{min-width:80px;min-height:80px}.dp{grid-template-columns:repeat(3,56px)}.dp button{min-width:56px}}
+@media(prefers-reduced-motion:reduce){.rk.nb{animation:none}.conf{display:none}*{scroll-behavior:auto!important}}
