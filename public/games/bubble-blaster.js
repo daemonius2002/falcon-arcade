@@ -1,7 +1,7 @@
 /* Bubble Blaster v0.4 — 12 levels: clear every coloured bubble before the ceiling pushes them over the line.
    Cells live in a Map keyed row*16+col; value = type (0-5 colour, 6 stone, 7 bomb) + 16 when it hides a star. */
 Arcade.game('bubble-blaster', { w: 240, h: 320, pad: 'lr', a: 'SHOOT',
-help: 'Aim with the mouse or drag your finger, then click or let go to shoot (or left / right and Space). Join 3 or more bubbles of one colour to pop them; anything left hanging falls for bonus points. Pop on shot after shot to grow your multiplier, and every 3 in a row earns a rainbow bubble that matches any colour. Grey stones never pop, so drop them. Touch a bomb to blast everything around it. Stars are worth +100. Swap your bubble with the next one using Down or by tapping the launcher. Shots that pop nothing use up the DROP lights: when they run out the ceiling comes down. Bubbles over the red line cost a heart. Clear all 12 levels to win!',
+help: 'Aim with the mouse or drag your finger, then click or let go to shoot (or left / right and Space). Join 3 or more bubbles of one colour to pop them; anything left hanging falls for bonus points. Pop on shot after shot to grow your multiplier, and every 3 in a row earns a rainbow bubble that matches any colour. Grey stones never pop, so drop them. Touch a bomb to blast everything around it. Stars are worth +100. Swap your bubble with the next one using Down or by tapping the launcher or the NEXT bubble. Shots that pop nothing use up the DROP lights: when they run out the ceiling comes down. Bubbles over the red line cost a heart. Clear all 12 levels to win!',
 init(A) {
   const K = Art, ID = 'bubble-blaster', RH = 21, LX = 120, LY = 296, LINE = 268, SP = 430, STONE = 6, BOMB = 7, RAIN = 8, STAR = 16, LEVELS = 12;
   const COL = ['#e8231e', '#ffd23c', '#3fd45a', '#3fa8e0', '#b06ae0', '#ff8a1e'], BG = ['#2a2458', '#1f3a5a', '#3a2450', '#1f4040', '#40283a', '#2a3060'];
@@ -97,7 +97,7 @@ init(A) {
   build();
   return {
     key(k) { if (k === 'a' || k === 'up') shoot(); else if (k === 'down') swap(); },
-    tap(x, y) { if (y > 284) return swap(); aim(x, y); shoot(); }, swipe(d, x0, y0) { drag = y0 <= 284; },
+    tap(x, y) { if (y > 284 && (Math.abs(x - LX) < 26 || x > 184)) return swap(); aim(x, y); shoot(); }, swipe(d, x0, y0) { drag = y0 <= 284; },
     update(dt) { t += dt; const p = A.ptr;
       if ((p.moved || p.down) && p.y < 284) aim(p.x, p.y);
       if (drag && !p.down) { drag = false; shoot(); } /* drag to aim, let go to shoot */

@@ -23,7 +23,7 @@ init(A) {
   for (let y = 0; y < H; y++) f.push(row());
 
   const fits = (c, x, y) => c.every(p => { const X = x + p[0], Y = y + p[1]; return X >= 0 && X < W && Y < H && (Y < 0 || f[Y][X] < 0); });
-  const info = () => A.info('LEVEL ' + lvl + '  LINES ' + lines);
+  const info = () => A.info('LINES ' + lines);   /* level is in the side panel; a longer line wraps in the header */
   const pop = (s, x, y, c) => pops.push({ s, x: Math.max(22, Math.min(FW - 22, x)), y: Math.max(12, y), c: c || '#ffffff', t: 0 });
   const tune = (...n) => n.forEach((fr, i) => jing.push({ f: fr, at: time + i * .09 }));
   const banner = () => { ban = { a: 'LEVEL ' + lvl, b: NEWS[lvl] || 'CLEAR ' + need(lvl) + ' LINES', t: 0 }; bg = K.T.brick(64, 64, BG[lvl - 1]); };
@@ -44,6 +44,7 @@ init(A) {
     for (const p of cur.c) fx.puff((cur.x + p[0]) * S + 6, (cur.y + p[1]) * S + 10, '#cfd6e6', 20); lock(); }
 
   function lock() { const p = cur; cur = null; if (p.t === BOMB) return blast(p.x, p.y);
+    if (p.c.some(c => p.y + c[1] < 0)) return A.over();   /* landed sticking out of the top: that is a top-out too */
     p.c.forEach((c, i) => { const Y = p.y + c[1]; if (Y >= 0) f[Y][p.x + c[0]] = p.t | (i === p.s ? STAR : 0); });
     A.beep(200, .04); settle(true); }
 
@@ -73,7 +74,8 @@ init(A) {
     if (up) { banner(); tune(659, 784, 988, 1319); if (lvl === 4 || lvl === 7) rub = every(); }
     info(); spawn(); }
 
-  function rise() { rub = every(); if (f.filter(r => r.includes(7)).length >= 4) return;   /* never more than 4 rubble rows: keep it fair */
+  function rise() { rub = every(); if (f.filter(r => r.includes(7)).length >= 4) return;
+    if (f[0].some(v => v >= 0)) return A.over();   /* the stack is at the very top: rubble would push blocks off, so the game ends */   /* never more than 4 rubble rows: keep it fair */
     f.shift(); const r = new Array(W).fill(7); if (A.rnd(0, 1) < .35) gap = A.ri(0, W - 1); r[gap] = -1; f.push(r);   /* the gap mostly stays in one column, so rubble can be dug out */ top = Math.max(0, top - 1);
     sh = Math.max(sh, .15); A.beep(110, .2, 'sawtooth', .05); pop('RUBBLE!', 60, 196, '#a9afc2'); }
 

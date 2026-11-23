@@ -1,5 +1,5 @@
 Arcade.game('brick-breaker', { w: 240, h: 320, pad: 'lr',
-help: 'Slide the paddle with your finger, the mouse or the arrow keys. Tap or press Space to launch the ball. Clear all 8 levels to win! Steel bricks take 2 hits, gold-framed stones never break, bomb bricks blow up their neighbours. Break bricks in a row without touching the paddle for combo points, and catch the falling capsules: W wide paddle, M multi-ball, S slow ball, F fire ball, B safety shield, + extra ball.',
+help: 'Slide the paddle with your finger, the mouse or the arrow keys. Tap or press Space to launch the ball. Clear all 8 levels to win; every new level starts with at least 3 balls. Steel bricks take 2 hits, gold-framed stones never break, bomb bricks blow up their neighbours. Break bricks in a row without touching the paddle for combo points, and catch the falling capsules: W wide paddle, M multi-ball, S slow ball, F fire ball, B safety shield, + extra ball.',
 init(A) {
   const K = Art, ID = 'brick-breaker-', R = 3, PY = 305, TOP = 14, COL = ['#e8231e', '#ff8a1e', '#ffd23c', '#3fd45a', '#3fa8e0', '#b06ae0'], BG = ['#2a2244', '#1e2c48', '#2e2238', '#1c3038'];
   /* o brick · s steel (2 hits) · x stone (unbreakable) · b bomb · m sliding bumper (unbreakable) */
@@ -55,7 +55,7 @@ init(A) {
   function lose() { lives--; tW = tS = tF = 0; sh = 4; A.beep(140, .3, 'sawtooth'); A.info('LEVEL ' + lvl); if (lives <= 0) { balls = []; A.over(); } else serve(); }
   function next() { A.add(100 * lvl); [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.beep(f, .12, 'triangle', .05), i * 90));
     if (lvl >= LV.length) { A.add(250 * lives); balls = []; drops = []; pop(120, 150, 'ALL CLEAR!', '#ffd23c'); A.over(true); return; }
-    pop(120, 150, 'LEVEL BONUS +' + 100 * lvl, '#ffd23c'); lvl++; build(); serve(); }
+    pop(120, 150, 'LEVEL BONUS +' + 100 * lvl, '#ffd23c'); lives = Math.max(lives, 3); lvl++; build(); serve(); }
   build(); serve();
   return {
     key(k) { if (k === 'a') launch(); }, tap() { launch(); },

@@ -30,7 +30,7 @@ init(A) {
   /* ---- helpers ---- */
   const info = () => A.info('WAVE ' + lvl);
   const say = (a, b, d) => { bTxt = a; bSub = b || ''; banner = d || 2; };
-  const pop = (x, y, txt, c) => pops.push({ x, y, txt, c: c || '#fff6c8', l: .9 });
+  const pop = (x, y, txt, c) => { const hw = String(txt).length * 3 + 2; pops.push({ x: Math.max(hw, Math.min(W - hw, x)), y: Math.max(8, Math.min(H - 8, y)), txt, c: c || '#fff6c8', l: .9 }); }; /* kept on screen */
   const score = (n, x, y) => { n *= mult; A.add(n); pop(x, y, n);
     if (A.score >= nextLife) { nextLife += 10000; if (lives < 5) { lives++; say('EXTRA SHIP!', '', 1.4); [660, 880, 1100].forEach((f, i) => A.beep(f, .1 + i * .05, 'triangle', .05)); } } };
   function mkRock(x, y, sz, kind, pv) {

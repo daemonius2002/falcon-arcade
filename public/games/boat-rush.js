@@ -6,15 +6,15 @@ init(A) {
   /* stages: name, cruise speed, hazard spacing, colours [sand, sand shade, water edge, water a, water b, deep, glint, rock] */
   const ST = [
     { n: 'MEADOW', v: 95, gap: 150, c: ['#ecd9a0', '#c8b070', '#3f96d6', '#1b6fb0', '#1f76b8', '#16609c', '#7fc0f0', '#8a94a4'] },
-    { n: 'PINE WOODS', v: 107, gap: 135, c: ['#d0c090', '#a09060', '#3a8ec0', '#17639c', '#1b6aa4', '#125488', '#78b8e6', '#7a8494'] },
-    { n: 'RED CANYON', v: 119, gap: 122, c: ['#f0c890', '#c8905a', '#3fc0c0', '#1b8a9a', '#1f92a2', '#167686', '#9fe6e6', '#b8704a'] },
-    { n: 'ICE VALLEY', v: 131, gap: 112, c: ['#ffffff', '#bcd6ec', '#7fc4ee', '#3f8ac8', '#4690cc', '#3478b4', '#e6f6ff', '#bfe0f5'] },
-    { n: 'SUNNY DELTA', v: 143, gap: 104, c: ['#fff0c0', '#e0c080', '#4fc8e0', '#1f96c8', '#24a0d0', '#1880b0', '#b8f0ff', '#8a94a4'] }];
+    { n: 'PINE WOODS', v: 104, gap: 140, c: ['#d0c090', '#a09060', '#3a8ec0', '#17639c', '#1b6aa4', '#125488', '#78b8e6', '#7a8494'] },
+    { n: 'RED CANYON', v: 112, gap: 130, c: ['#f0c890', '#c8905a', '#3fc0c0', '#1b8a9a', '#1f92a2', '#167686', '#9fe6e6', '#b8704a'] },
+    { n: 'ICE VALLEY', v: 120, gap: 124, c: ['#ffffff', '#bcd6ec', '#7fc4ee', '#3f8ac8', '#4690cc', '#3478b4', '#e6f6ff', '#bfe0f5'] },
+    { n: 'SUNNY DELTA', v: 127, gap: 118, c: ['#fff0c0', '#e0c080', '#4fc8e0', '#1f96c8', '#24a0d0', '#1880b0', '#b8f0ff', '#8a94a4'] }];
   const E = []; ST.reduce((a, t) => (E.push(a + t.v * 27), a + t.v * 27), 0); /* world distance where each stage ends */
   const T = E[4], si = w => { let i = 0; while (i < 4 && w >= E[i]) i++; return i; };
   /* river centre and half width: it winds more and gets narrower on the way down, then opens into the sea */
   const cx = w => 120 + Math.sin(w * .008) * (28 + 22 * Math.min(1, w / T)) + Math.sin(w * .021 + 1) * 10;
-  const hw = w => 60 - 14 * Math.min(1, w / T) + 3 * Math.sin(w * .013) + Math.max(0, w - T) * 1.2;
+  const hw = w => 60 - 9 * Math.min(1, w / T) + 3 * Math.sin(w * .013) + Math.max(0, w - T) * 1.2;
 
   /* ---- sprites (cached by K.spr / K.tex) ---- */
   const starP = (n, r1, r2) => { const p = []; for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * TAU, r = i % 2 ? r2 : r1; p.push(Math.sin(a) * r, -Math.cos(a) * r); } return p; };
@@ -80,7 +80,7 @@ init(A) {
   function steer(dt) {
     const d = (A.keys.right ? 1 : 0) - (A.keys.left ? 1 : 0);
     if (d) ptrMode = false; else if (A.ptr.down || A.ptr.moved) { ptrMode = true; tx = A.ptr.x; }
-    const want = d ? d * 150 : ptrMode ? Math.max(-190, Math.min(190, (tx - x) * 10)) : 0;
+    const want = d ? d * 175 : ptrMode ? Math.max(-190, Math.min(190, (tx - x) * 10)) : 0;
     vx += Math.max(-1100 * dt, Math.min(1100 * dt, want - vx)); x += vx * dt;
   }
 
@@ -104,7 +104,7 @@ init(A) {
         else if (o.t === 'h') { if (ax < 13 && ay < 15) { o.got = 1; if (lives < 5) { lives++; pop('+1 LIFE', X, BY - 16, '#ff8a9a'); } else { A.add(100); pop('+100', X, BY - 16, '#ff8a9a'); } tune([660, 990, 1320], .08); F.spark(X, BY - 6, ['#ff8a9a', '#ffffff'], 10, 60); } }
         else if (o.t === 'g') { if (!o.done && o.w <= wb) { o.done = 1; if (ax < 15) { o.ok = 1; chain(); const n = 30 * mult(); A.add(n); pop('GATE +' + n, X, BY - 16, '#5fe3d6'); tune([784, 1047], .08); } } }
         else if (o.t === 'w') { if (ay < 40 && ax < 46) x += Math.sign(dx) * 62 * dt * (1 - ax / 46); if (ax < 9 && ay < 11) crash(); }
-        else if (inv <= 0 && ax < (o.t === 'l' ? 18 : o.t === 'i' ? 17 : 10) && ay < (o.t === 'i' ? 27 : 16)) { crash(); if (o.t !== 'i') { o.got = 1; F.spark(X, BY - (o.w - wb), o.t === 'l' ? ['#c08a4a', '#8a5a2a'] : ['#c8d0dc', '#8a94a4'], 12, 70); } } }
+        else if (inv <= 0 && ax < (o.t === 'l' ? 17 : o.t === 'i' ? 16 : 9) && ay < (o.t === 'i' ? 24 : 14)) { crash(); if (o.t !== 'i') { o.got = 1; F.spark(X, BY - (o.w - wb), o.t === 'l' ? ['#c08a4a', '#8a5a2a'] : ['#c8d0dc', '#8a94a4'], 12, 70); } } }
       if (dead > 0) { hud(); return; }
       /* stage lines and the sea */
       if (wb >= E[stage]) { const bonus = 100 * (stage + 1) + 25 * lives; A.add(bonus);
