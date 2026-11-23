@@ -51,10 +51,10 @@ init(A) {
   const jump = () => { S.jb = .13; };
   const slide = () => { if (S.fell) return; if (S.air) { S.vy = Math.max(S.vy, 320); S.slq = 1; } else { if (S.sl <= 0) A.beep(240, .08, 'sawtooth', .03); S.sl = .5; } };
   function hurt() { S.hp--; S.inv = 1.7; S.shake = .3; S.streak = 0; S.mult = 1; A.beep(150, .3, 'sawtooth'); puff(PX, Math.min(GY, S.y) - 10, RED, 10, 60, 200); puff(PX, Math.min(GY, S.y) - 10, '#ffffff', 6, 60, 200); if (S.hp <= 0) A.over(); }
-  function clear() { const s = S.stage, x = S.gate.x; S.gate.done = 1; A.add(50 * s); pop('+' + 50 * s, PX, GY - 34, '#ffd23c'); A.beep(660, .12, 'triangle', .05); A.beep(990, .3, 'triangle', .05);
+  function clear() { const s = S.stage, x = S.gate.x; S.gate.done = 1; A.add(50 * s); pop('+' + 50 * s, PX, GY - 30, '#ffd23c'); A.beep(660, .12, 'triangle', .05); A.beep(990, .3, 'triangle', .05);
     for (let i = 0; i < 4; i++) puff(x + A.rnd(-16, 16), GY - A.rnd(8, 44), i % 2 ? '#ffd23c' : '#fff6c8', 5, 50, 120);
     if (s === LAST) { A.add(250 * S.hp); A.over(true); return; }
-    S.stage++; if (S.hp < 3) { S.hp++; pop('+1 HEART', PX + 4, GY - 44, '#ff8a9a'); } S.end = S.dist + len(S.stage); S.next = 120; S.force = FORCE[S.stage]; S.ban = { t: 3, a: 'STAGE ' + S.stage, b: HINT[S.stage] }; }
+    S.stage++; if (S.hp < 3) { S.hp++; pop('+1 HEART', PX + 30, GY - 22, '#ff8a9a'); } S.end = S.dist + len(S.stage); S.next = 120; S.force = FORCE[S.stage]; S.ban = { t: 3, a: 'STAGE ' + S.stage, b: HINT[S.stage] }; }
 
   return {
     key(k) { if (k === 'a' || k === 'up') jump(); else if (k === 'down') slide(); },
@@ -69,7 +69,7 @@ init(A) {
       /* jump (buffered a moment, so pressing just before landing still works) */
       if (S.jb > 0) { S.jb -= dt; if (S.jumps < 2 && !S.fell) { const dbl = S.jumps > 0; S.vy = dbl ? -230 : -262; S.jumps++; S.jb = 0; S.sl = 0; S.slq = 0; S.air = Math.max(S.air, .11); A.beep(dbl ? 760 : 560, .05); puff(PX, S.y, dbl ? '#8fd3ff' : '#d6dbea', dbl ? 7 : 4, 30); } }
       const gap = S.gaps.some(q => PX > q.x + 2 && PX < q.x + q.w - 2);
-      if (S.fell) { if (!S.gaps.some(q => q.x < PX + 46 && q.x + q.w > PX - 12)) { S.fell = 0; S.y = -14; S.vy = 0; S.jumps = 1; S.air = .2; } }
+      if (S.fell) { if (!S.gaps.some(q => q.x < PX + 20 + S.sp * .7 && q.x + q.w > PX - 12)) { S.fell = 0; S.y = -14; S.vy = 0; S.jumps = 1; S.air = .2; S.inv = Math.max(S.inv, 1); } } /* drop back in only where the roof stays solid for the whole fall */
       else { const py = S.y; S.vy += 720 * dt; S.y += S.vy * dt;
         if (S.vy >= 0 && S.y >= GY && !gap && (py <= GY || S.y < GY + 6)) { if (S.air > .05) { puff(PX, GY, '#d6dbea', 4, 26); if (S.slq) S.sl = .3; } S.y = GY; S.vy = 0; S.jumps = 0; S.air = 0; S.slq = 0; }
         else { S.air += dt; S.sl = 0; if (!S.jumps && S.air > .1) S.jumps = 1; }
@@ -93,7 +93,7 @@ init(A) {
       g.save(); if (sh) g.translate(A.ri(-1, 1), A.ri(-1, 1));
       /* sky, moon, two parallax skylines */
       g.drawImage(SKY[pi], -2, -2); if (pi === 1 || pi === 2) for (let i = 0; i < 14; i++) K.box(g, i * 47 % 160, i * 29 % 50, 1, 1, (i + Math.floor(t * 2)) % 5 ? '#d6dbea' : '#59627a');
-      const mx = 132 - S.stage * 9; K.put(g, MOON, mx, 22); K.box(g, mx - 5, 18, 3, 3, '#e0c8a0'); K.box(g, mx + 3, 25, 2, 2, '#e0c8a0');
+      const mx = 143 - S.stage, my = 26 + S.stage * 2; K.put(g, MOON, mx, my); K.box(g, mx - 5, my - 4, 3, 3, '#e0c8a0'); K.box(g, mx + 3, my + 3, 2, 2, '#e0c8a0'); /* sinks a little each stage, clear of the banner */
       for (let i = -1; i < 9; i++) { const x = i * 24 - Math.floor(dist * .12) % 24, h = 22 + ((i + Math.floor(dist * .12 / 24)) * 31 % 26 + 26) % 26; K.box(g, x, GY - h, 20, h, '#2a2050'); K.box(g, x, GY - h, 20, 1, '#4a3a7a'); }
       for (let i = -1; i < 6; i++) { const n = i + Math.floor(dist * .3 / 40), x = i * 40 - Math.floor(dist * .3) % 40, h = 30 + (n * 37 % 30 + 30) % 30; K.put(g, K.building(26, h, (n % 3 + 3) % 3), x + 13, GY - h / 2 - 3); }
       if (S.gate) K.put(g, gate(S.gate.gold ? 1 : 0), S.gate.x, GY - 29);

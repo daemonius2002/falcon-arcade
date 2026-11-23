@@ -1,5 +1,5 @@
 Arcade.game('memory-cards', { w: 180, h: 224,
-help: 'Tap two cards to turn them over (keyboard: arrows move the frame, Space turns a card). Two of the same picture stay open. Find every pair to clear the level - there are 7 levels and the boards get bigger. Peeking at new cards is free, but a miss with a card you have already seen (yellow corner dot) costs a heart. Matches in a row are worth more and more points. From level 3 the golden eye pair shows you every card for a moment, from level 4 the golden heart pair gives a heart back, and from level 5 two cards swap places now and then - watch them closely! Clear a level without losing a heart for a PERFECT bonus. The game ends when you run out of hearts or beat level 7.',
+help: 'Tap two cards to turn them over (keyboard: arrows move the frame, Space turns a card). Two of the same picture stay open. Find every pair to clear the level - there are 7 levels and the boards get bigger. Peeking at new cards is free. Level 1 is practice; from level 2 a miss with a card you have already seen (yellow corner dot) costs a heart. Matches in a row are worth more and more points. From level 3 the golden eye pair shows you every card for a moment, from level 4 the golden heart pair gives a heart back, and from level 5 two cards swap places now and then - watch them closely! Clear a level without losing a heart for a PERFECT bonus. The game ends when you run out of hearts or beat level 7.',
 init(A) {
   const K = Art, F = K.fx(), ID = 'memory-cards-', E = K.ell, B = K.box, P = K.part, EYE = 20, HEART = 21, MAXH = 6;
   const LV = [[4, 3], [4, 4], [4, 5], [5, 6], [5, 6], [6, 6], [6, 6]], SWAP = [0, 0, 0, 0, 4, 5, 3]; /* board size and "swap two cards every N turns" per level */
@@ -36,12 +36,12 @@ init(A) {
   const icon = (i, n) => K.spr(ID + i + '_' + n, n, n, g => { g.scale(n / 20, n / 20); ICON[i](g); });
 
   let level = 0, cards = [], cols = 4, rows = 3, s = 44, cs = 40, ox = 2, oy = 22, need = 6, pairs = 0, turns = 0, hearts = 5, lost = 0, streak = 0, open = [],
-    mode = 'intro', mt = 0, cur = 0, kb = false, shake = 0, hurt = 0, gain = 0, floats = [], notes = [], time = 0, bonus = 0;
+    mode = 'intro', mt = 0, cur = 0, kb = false, shake = 0, hurt = 0, gain = 0, floats = [], notes = [], time = 0, bonus = 0, more = false;
   const sx = i => ox + (i % cols) * s + (s >> 1), sy = i => oy + Math.floor(i / cols) * s + (s >> 1);
   const mix = a => { for (let i = a.length - 1; i > 0; i--) { const j = A.ri(0, i), q = a[i]; a[i] = a[j]; a[j] = q; } return a; };
   const say = (c, str, col) => floats.push({ x: Math.max(30, Math.min(150, c.x)), y: c.y - cs / 2, s: str, c: col, t: 1 });
   const tune = (...f) => f.forEach((v, i) => notes.push({ t: i * .1, f: v }));
-  const info = () => A.info('LV ' + (level + 1) + ' · ' + pairs + '/' + need);
+  const info = () => A.info('LEVEL ' + (level + 1)); /* short: the header wraps on phones; pairs to go are shown in the canvas */
 
   function setup() { [cols, rows] = LV[level]; need = cols * rows / 2; pairs = turns = lost = streak = 0; open = []; cur = 0;
     s = Math.min(Math.floor(176 / cols), Math.floor(200 / rows)); cs = s - (s > 35 ? 4 : 2); ox = Math.round((180 - cols * s) / 2); oy = 22 + Math.round((200 - rows * s) / 2);
@@ -59,16 +59,17 @@ init(A) {
     if (a.f === b.f) { a.found = b.found = true; open = []; pairs++; streak++; const pts = 100 * Math.min(streak, 5); A.add(pts); a.pop = b.pop = .5; a.seen = b.seen = true; info();
       for (const c of [a, b]) F.spark(c.x, c.y, ['#ffd23c', '#fff6c8', '#3fd45a'], 10, 70); say(b, '+' + pts, '#ffd23c'); A.beep(620 + 90 * Math.min(streak, 5), .1, 'triangle', .05); notes.push({ t: .09, f: 820 + 110 * Math.min(streak, 5) });
       if (a.f === HEART && hearts < MAXH) { hearts++; gain = .8; say(a, '+1 HEART', '#ff8a9a'); }
-      if (pairs === need) { bonus = 150 * (level + 1) + 50 * hearts + (lost ? 0 : 300); A.add(bonus); mode = 'clear'; mt = level === 6 ? 3.6 : 2.8; tune(660, 880, 990, 1320); if (level === 6) A.add(1000); else if (hearts < MAXH) { hearts++; gain = .8; } }
+      if (pairs === need) { bonus = 150 * (level + 1) + 50 * hearts + (lost ? 0 : 300); A.add(bonus); mode = 'clear'; mt = level === 6 ? 3.6 : 2.8; tune(660, 880, 990, 1320); more = level < 6 && hearts < MAXH; if (level === 6) A.add(1000); else if (more) { hearts++; gain = .8; } }
       else if (a.f === EYE) { mode = 'peek'; mt = 2; for (const c of cards) if (!c.found) c.up = true; tune(700, 900); }
       else maybeSwap(); }
-    else { const cost = a.seen || b.seen; streak = 0; a.seen = b.seen = true; a.sh = b.sh = .55; mode = 'wait'; mt = 1;
+    else { const old = a.seen || b.seen, cost = old && level > 0; /* level 1 is practice: no hearts lost */ streak = 0; a.seen = b.seen = true; a.sh = b.sh = .55; mode = 'wait'; mt = 1;
       if (cost) { hearts--; lost++; hurt = .6; shake = .3; say(b, 'SEEN BEFORE! -1', '#ff8a9a'); A.beep(170, .25, 'sawtooth', .05); if (hearts <= 0) { mode = 'dead'; mt = 2.4; for (const c of cards) c.up = true; open = []; } }
+      else if (old) { lost++; say(b, 'TRY TO REMEMBER!', '#ffd23c'); A.beep(240, .12, 'sine', .05); }
       else { say(b, 'FREE PEEK', '#bfe6ff'); A.beep(300, .09, 'sine', .05); } } }
 
   function pick(i) { if (mode === 'intro') { if (time > .5) { mode = 'play'; mt = 0; } return; }
     if (mode === 'wait' && mt < .65) closeMiss(); if (mode !== 'play') return;
-    const c = cards[i]; if (!c || c.found || c.up) return; c.up = true; open.push(c); A.beep(520 + open.length * 90, .04); if (open.length === 2) resolve(); }
+    const c = cards[i]; if (!c || c.found || c.up || Math.abs(c.y - sy(i)) > 6) return; /* still being dealt in */ c.up = true; open.push(c); A.beep(520 + open.length * 90, .04); if (open.length === 2) resolve(); }
 
   setup();
   return {
@@ -109,7 +110,7 @@ init(A) {
       const ban = (h, col) => { const y = 112 - (h >> 1); B(g, 0, y, 180, h, '#140e1c'); B(g, 0, y + 1, 180, 1, col); B(g, 0, y + h - 2, 180, 1, col); return y; };
       if (mode === 'intro') { const y = ban(44, '#ffd23c'); T(g, 'LEVEL ' + (level + 1), 90, y + 6, '#ffd23c', 2, 'center'); T(g, TIP[level][0], 90, y + 22, '#ffffff', 1, 'center'); T(g, TIP[level][1], 90, y + 31, '#ffffff', 1, 'center'); }
       else if (mode === 'clear') { const y = ban(52, '#3fd45a'); T(g, level === 6 ? 'ALL PAIRS FOUND!' : 'LEVEL CLEAR!', 90, y + 6, '#3fd45a', 2, 'center'); T(g, 'BONUS +' + bonus, 90, y + 22, '#ffd23c', 1, 'center');
-        T(g, lost ? (level === 6 ? 'GREAT MEMORY!' : 'ONE MORE HEART FOR YOU') : 'PERFECT! NO HEARTS LOST: +300', 90, y + 31, '#ffffff', 1, 'center'); if (level === 6) T(g, 'CHAMPION BONUS +1000', 90, y + 40, '#ff9a2a', 1, 'center'); }
+        T(g, lost ? (more ? 'ONE MORE HEART FOR YOU' : 'GREAT MEMORY!') : 'PERFECT! NO HEARTS LOST: +300', 90, y + 31, '#ffffff', 1, 'center'); if (level === 6) T(g, 'CHAMPION BONUS +1000', 90, y + 40, '#ff9a2a', 1, 'center'); }
       else if (mode === 'dead' && mt < 1.6) { const y = ban(30, '#e8231e'); T(g, 'OUT OF HEARTS', 90, y + 6, '#ff8a9a', 2, 'center'); T(g, 'YOU REACHED LEVEL ' + (level + 1), 90, y + 20, '#ffffff', 1, 'center'); } }
   };
 } });

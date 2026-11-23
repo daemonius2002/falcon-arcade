@@ -124,6 +124,6 @@ init(A) {
       let y = 5; for (let i = 0; i < 3; i++) if (pw[i] > 0) { A.text(g, PN[i].split(' ')[0], 4, y, PC[i]); K.box(g, 30, y, 26, 5, '#141428'); K.box(g, 31, y + 1, Math.ceil(pw[i] / (i === 2 ? 9 : 8) * 24), 3, PC[i]); y += 8; }
       if (mult > 1) A.text(g, 'CHAIN X' + mult, W - 4, 5, '#ffd23c', 1, 'right');
       for (const e of en) if (e.k === BOSS) { K.box(g, 79, 15, 82, 6, '#141428'); K.box(g, 80, 16, Math.ceil(e.hp / e.max * 80), 4, '#e8231e'); A.text(g, 'STORM BLIMP', TX, 7, '#ff8a7a', 1, 'center'); }
-      if (banner > 0) { A.text(g, bTxt, TX + 1, 111, '#141428', 2, 'center'); A.text(g, bTxt, TX, 110, '#fff6c8', 2, 'center'); if (bSub) { A.text(g, bSub, TX + 1, 127, '#141428', 1, 'center'); A.text(g, bSub, TX, 126, '#ffd23c', 1, 'center'); } } }
+      if (banner > 0 && t > 0) { A.text(g, bTxt, TX + 1, 111, '#141428', 2, 'center'); A.text(g, bTxt, TX, 110, '#fff6c8', 2, 'center'); if (bSub) { A.text(g, bSub, TX + 1, 127, '#141428', 1, 'center'); A.text(g, bSub, TX, 126, '#ffd23c', 1, 'center'); } } }
   };
 } });

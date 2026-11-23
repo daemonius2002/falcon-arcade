@@ -51,7 +51,7 @@ init(A) {
     if (f.row < best) { best = f.row; A.add(10); } }
   build(); reset(); info();
   return {
-    key(k) { if (k === 'a') k = 'up'; held = k; holdT = .28; hop(k); },
+    key(k) { held = k; holdT = .28; hop(k === 'a' ? 'up' : k); }, /* Space hops up too, and keeps hopping while held */
     tap(x, y) { const dx = x - frog.x - 8, dy = y - frog.row * 16 - 8; hop(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up'); },
     update(dt) { T += dt; shake = Math.max(0, shake - dt); noteT -= dt;
       for (const l of lanes) for (let i = 0; i < l.o.length; i++) l.o[i] = ((l.o[i] + l.dir * l.sp * dt) % l.span + l.span) % l.span;
@@ -62,7 +62,7 @@ init(A) {
       if (clr > 0) { clr -= dt; if (clr <= 0) { lvl++; home = [0, 0, 0, 0, 0]; flyAt = -1; if (lives < 5) { lives++; say(NEWS[lvl] || 'LEVEL ' + lvl, 2.2); pop('+1 LIFE', 80, 196, '#ff8a9a'); } else say(NEWS[lvl] || 'LEVEL ' + lvl, 2.2); build(); reset(); info(); } return; }
       if (dead > 0) { dead -= dt; if (dead <= 0) { if (lives <= 0) A.over(); else reset(); } return; }
       const f = frog; f.h = Math.max(0, f.h - dt * 11);
-      if (held && A.keys[held]) { if ((holdT -= dt) <= 0) { holdT = .16; hop(held); } } else held = '';
+      if (held && A.keys[held]) { if ((holdT -= dt) <= 0) { holdT = .16; hop(held === 'a' ? 'up' : held); } } else held = '';
       const t0 = time; time -= dt; if (time <= 0) return die('time'); if (time < 6 && Math.floor(time) !== Math.floor(t0)) A.beep(880, .05);
       if (clr > 0) return; const cx = f.x + 8, l = lanes.find(v => v.row === f.row);
       if (snk && f.row === 6 && Math.abs(cx - snk.x) < 15) return die('hit');
@@ -91,7 +91,7 @@ init(A) {
       F.draw(g); for (const p of pops) { A.text(g, p.s, p.x + 1, p.y + 1, '#12101c', 1, 'center'); A.text(g, p.s, p.x, p.y, p.c, 1, 'center'); }
       for (let i = 0; i < lives; i++) { const x = 152 - i * 7, y = 197; K.box(g, x - 1, y, 7, 4, '#12101c'); K.box(g, x, y + 4, 5, 1, '#12101c'); K.box(g, x + 1, y + 5, 3, 1, '#12101c'); K.box(g, x, y, 2, 4, '#e8231e'); K.box(g, x + 3, y, 2, 4, '#e8231e'); K.box(g, x + 1, y + 1, 3, 4, '#e8231e'); K.box(g, x + 2, y + 5, 1, 1, '#e8231e'); K.box(g, x, y, 1, 1, '#ffb0a0'); }
       const tw = Math.round(160 * Math.max(0, time) / TMAX); K.box(g, 0, 205, 160, 3, '#12101c'); if (time > 6 || Math.floor(T * 6) % 2) K.box(g, 0, 206, tw, 2, time > 12 ? '#6fe85a' : time > 6 ? '#ffd23c' : '#e8231e');
-      if (noteT > 0) { const w = note.length * 8 + 10; K.box(g, 80 - w / 2, 92, w, 20, '#12101c'); K.box(g, 80 - w / 2 + 1, 93, w - 2, 18, '#2a2440'); A.text(g, note, 80, 97, '#ffd23c', 2, 'center'); }
+      if (noteT > 0) { const w = note.length * 8 + 10; K.box(g, 80 - w / 2, 44, w, 20, '#12101c'); K.box(g, 80 - w / 2 + 1, 45, w - 2, 18, '#2a2440'); A.text(g, note, 80, 49, '#ffd23c', 2, 'center'); } /* over the river, far from the start row and the middle path */
       if (sh) g.restore(); }
   };
 } });

@@ -1,7 +1,7 @@
 /* Table Tennis — a five-rival cup. Every match is first to 11 points and a smash winner counts double.
    Rivals get faster and learn new tricks (placed shots, smashes, curve balls); bonus stars appear from match two. */
 Arcade.game('table-tennis', { w: 240, h: 320, pad: 'dpad', a: 'HIT',
-help: 'Win the cup: beat five rivals, each match is first to 11 points. Your red bat follows your finger or the mouse on your half of the table, or use the arrow keys. Hit the ball with the side of the bat to aim it. SMASH: move the bat forward as you hit, or press Space (the HIT button, or tap with a second finger) just as the ball arrives. A smash the rival cannot return scores 2 points! Slide sideways as you hit to curve the ball. Later rivals place their shots, smash back and curve the ball. Knock the ball through a gold star for bonus points and a dazzled rival. You have three hearts, losing a match costs one.',
+help: 'Win the cup: beat five rivals, each match is first to 11 points. Your red bat follows your finger or the mouse on your half of the table, or use the arrow keys. Hit the ball with the side of the bat to aim it. SMASH: move the bat forward as you hit, or press Space (the HIT button, or tap with a second finger) just as the ball arrives. A smash the rival cannot return scores 2 points! A smash cannot be smashed back, only blocked. Long rallies make the rival wobble. Slide sideways as you hit to curve the ball. Later rivals place their shots, smash back and curve the ball. Knock the ball through a gold star for bonus points and a dazzled rival. You have three hearts, losing a match costs one.',
 init(A) {
   const K = Art, F = K.fx(), W = 240, NET = 165, CY = 46, PW = 30, WIN = 11, RED = '#e8231e';
   const cl = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -30,14 +30,14 @@ init(A) {
   let cx = 120, ckick = 0, coff = 0, daze = 0, svx = 120;                               /* rival bat */
   let b = { x: 120, y: CY + 12, vx: 0, vy: 0, sp: 0, y0: CY, yb: NET, bn: true, pow: false, by: 0 }, sv = 0, rally = 0, best = 0;
   let star = null, starT = 5, trail = [], msgs = [], shake = 0, flash = 0;
-  const say = (s, x, y, c) => msgs.push({ s, x: cl(x, 34, W - 34), y, c, t: 1.2 });
-  const hud = () => A.info('Match ' + (round + 1) + '/5 · You ' + me + ':' + cpu);
+  const say = (s, x, y, c, z) => { z = z || 1; const hw = (s.length * 4 * z) / 2 + 4; msgs.push({ s, x: cl(x, hw, W - hw), y, c, z, t: 1.2 }); };
+  const hud = () => A.info('Match\u00a0' + (round + 1) + '\u00a0·\u00a0' + me + ':' + cpu);
   const fold = x => { x = (x - 4) % 464; if (x < 0) x += 464; return 4 + (x > 232 ? 464 - x : x); };   /* x after bouncing off the side walls */
 
   function startMatch() { R = RIV[round]; me = cpu = 0; px = cx = 120; py = 282; tx = null; star = null; starT = 5; trail = []; daze = 0; sv = 0;
     b.vx = b.vy = 0; b.x = 120; b.y = CY + 12; phase = 'intro'; tmr = 2.4; banner = ['MATCH ' + (round + 1) + ' OF 5', 'VS ' + R.name, R.tip]; hud(); A.beep(520, .08, 'triangle'); }
   function serve(who) { sv = who; phase = 'serve'; tmr = who ? 1.5 : 1; rally = 0; trail = []; svx = A.rnd(60, 180); b.vx = b.vy = b.sp = 0; b.pow = false; b.bn = true;
-    if (Math.max(me, cpu) >= WIN - 1) say(me >= WIN - 1 ? 'MATCH POINT!' : 'HANG ON!', 120, NET - 30, '#ffd23c'); }
+    if (Math.max(me, cpu) >= WIN - 1) say(me >= WIN - 1 ? 'MATCH POINT!' : 'HANG ON!', 120, NET - 30, '#ffd23c', 2); }
   /* send the ball off a bat: who 1 = you (ball flies up), 0 = rival */
   function fly(who, s, vx, pow, spin) { b.vy = who ? -s : s; b.vx = cl(vx, -s * .85, s * .85); b.sp = spin; b.pow = pow; b.by = who; b.y0 = b.y; b.yb = who ? NET - 62 : NET + 62; b.bn = false; }
   function launch() { phase = 'play'; A.beep(600, .04);
@@ -45,24 +45,25 @@ init(A) {
     else { b.x = cx; b.y = CY + 9; ckick = .12; fly(0, R.sp, A.rnd(-45, 45), false, 0); } }
   function swing() { if (phase === 'serve' && sv) tmr = Math.min(tmr, .05); else if (swT <= 0) { swT = .5; A.beep(240, .03, 'triangle', .02); } }
 
-  function myHit() { const fwd = Math.max(0, -pvy), pow = swT > .3 || fwd > 130, sp = Math.abs(pvx) > 60 ? cl(pvx * .55, -150, 150) : 0;
-    const s = cl(Math.abs(b.vy) + 12 + (pow ? 85 : fwd * .2), R.sp, R.max + (pow ? 60 : 0));
+  function myHit() { const fwd = Math.max(0, -pvy), want = swT > .3 || fwd > 130, pow = want && !b.pow,   /* a smash can only be blocked, not smashed back */ sp = Math.abs(pvx) > 60 ? cl(pvx * .55, -150, 150) : 0;
+    const s = cl(Math.abs(b.vy) + 14 + (pow ? 85 : fwd * .2), R.sp, R.max + (pow ? 60 : 0));
     b.y = py - 8; fly(1, s, (b.x - px) * (pow ? 7 : 6) + pvx * .2, pow, sp); rally++; best = Math.max(best, rally); kick = .14;
-    coff = A.rnd(-1, 1) * R.err * (pow ? R.grit : 1) * (1 + Math.abs(sp) / 150 * .7);
+    coff = A.rnd(-1, 1) * R.err * (pow ? R.grit : 1) * (1 + Math.abs(sp) / 150 * .7) * (1 + Math.max(0, rally - 8) * .12);   /* long rallies make the rival wobble */
+    if (rally % 10 === 0) { say('RALLY ' + rally + '!', 120, NET + 40, '#7fe8ff', 2); A.beep(880, .08, 'triangle', .04); }
     F.spark(b.x, b.y, pow ? ['#ffffff', '#ffd23c', '#ff9a2a'] : ['#ffffff', '#ffb0a0'], pow ? 14 : 5, pow ? 110 : 60);
-    if (pow) { shake = .12; say('SMASH!', b.x, b.y - 22, '#ff9a2a'); A.beep(760, .07); A.beep(380, .09, 'sawtooth', .03); } else A.beep(430 + Math.min(rally, 14) * 14, .05);
-    if (sp && !pow) say('CURVE!', b.x, b.y - 22, '#7fe8ff'); }
+    if (pow) { shake = .12; say('SMASH!', b.x, b.y - 24, '#ff9a2a', 2); A.beep(760, .07); A.beep(380, .09, 'sawtooth', .03); } else A.beep(430 + Math.min(rally, 14) * 14, .05);
+    if (want && !pow) say('BLOCK!', b.x, b.y - 22, '#fff6c8'); else if (sp && !pow) say('CURVE!', b.x, b.y - 22, '#7fe8ff'); }
   function cpuHit() { const pow = rally >= 2 && Math.random() < R.smash, s = cl(Math.abs(b.vy) + 10 + (pow ? 70 : 0), R.sp, R.max + (pow ? 40 : 0)), T = (py - CY) / s, reach = (130 + round * 15) * T;
     /* aim away from you, but never further than the arrow keys can run in time */
     const want = cl(px < 120 ? 205 : 35, px - reach, px + reach), loose = (b.x - cx) * 6 + A.rnd(-30, 30);
     b.y = CY + 8; fly(0, s, loose + ((want - b.x) / T - loose) * R.aim, pow, R.spin ? A.rnd(-1, 1) * R.spin : 0); rally++; ckick = .14;
     F.spark(b.x, b.y, pow ? ['#ffffff', R.col, '#ff5a4a'] : ['#ffffff', R.col], pow ? 12 : 5, pow ? 100 : 60);
-    if (pow) { flash = .5; say('LOOK OUT!', b.x, b.y + 16, '#ff5a4a'); A.beep(300, .1, 'sawtooth', .04); } else A.beep(330, .05); }
+    if (pow) { flash = .5; say('LOOK OUT!', b.x, b.y + 16, '#ff5a4a', 2); A.beep(300, .1, 'sawtooth', .04); } else A.beep(330, .05); }
 
   function point(mine) { const two = mine && b.pow, pts = two ? 2 : 1; shake = .3; trail = [];
     F.spark(b.x, mine ? 34 : 300, ['#ffffff', '#ffd23c', mine ? RED : R.col], 24, 140);
     if (mine) { me = Math.min(WIN, me + pts); const n = (40 * (round + 1) + Math.min(rally, 20) * 4) * pts; A.add(n);
-      say(two ? 'POWER POINT! +' + n : rally < 2 ? 'ACE! +' + n : '+' + n, 120, NET - 46, '#ffd23c'); A.beep(700, .15, 'triangle', .05); if (two) setTimeout(() => A.beep(940, .15, 'triangle', .05), 110); }
+      say(two ? 'POWER POINT! +' + n : rally < 2 ? 'ACE! +' + n : '+' + n, 120, NET - 46, '#ffd23c', two || rally < 2 ? 2 : 1); A.beep(700, .15, 'triangle', .05); if (two) setTimeout(() => A.beep(940, .15, 'triangle', .05), 110); }
     else { cpu++; A.beep(200, .2, 'sawtooth'); }
     hud(); if (me < WIN && cpu < WIN) return serve(mine ? 1 : 0);
     phase = 'end'; tmr = 2.8; star = null; b.vx = b.vy = 0; b.x = 120; b.y = NET; b.bn = true;
@@ -116,7 +117,7 @@ init(A) {
       K.box(g, 12, 36, 224, 272, 'rgba(0,0,0,.35)'); K.box(g, 7, 29, 226, 272, '#140e1c'); g.save(); g.beginPath(); g.rect(8, 30, 224, 270); g.clip(); K.scroll(g, tab(round), 0, 0, W, 320); g.restore();
       for (const q of [[8, 30, 224, 3], [8, 297, 224, 3], [8, 30, 3, 270], [229, 30, 3, 270], [119, 30, 2, 270]]) K.box(g, q[0], q[1], q[2], q[3], '#f2f5f8');
       A.text(g, cpu, 30, NET - 46, 'rgba(255,255,255,.28)', 6, 'center'); A.text(g, me, 30, NET + 18, 'rgba(255,255,255,.28)', 6, 'center');
-      A.text(g, R.name, 210, NET - 22, 'rgba(255,255,255,.28)', 2, 'center'); A.text(g, 'YOU', 210, NET + 14, 'rgba(255,255,255,.28)', 2, 'center');
+      A.text(g, R.name, 224, NET - 22, 'rgba(255,255,255,.28)', 2, 'right'); A.text(g, 'YOU', 224, NET + 14, 'rgba(255,255,255,.28)', 2, 'right');
       if (star) { const a = star.t < 2 && Math.floor(t * 8) % 2 ? .35 : 1, r = 11 + Math.round(Math.sin(t * 6)); g.globalAlpha = a; for (let i = 0; i < 8; i++) { const an = t * 2 + i * K.TAU / 8; K.box(g, Math.round(star.x + Math.cos(an) * r), Math.round(star.y + Math.sin(an) * r), 2, 2, '#fff6c8'); } g.globalAlpha = 1; K.put(g, K.star2('#ffd23c', 15), star.x, star.y, { a }); }
       if (b.y < NET) K.shadow(g, b.x + 2 + z * .3, b.y + 3, 3, 2);
       /* net */
@@ -131,13 +132,14 @@ init(A) {
       const tc = b.pow ? 1 : b.sp ? 2 : 0; for (let i = 0; i < trail.length; i += 2) K.box(g, Math.round(trail[i]) - 1, Math.round(trail[i + 1]) - 1, 3, 3, TR[i >> 1][tc]);
       K.put(g, K.ball(z > 5 ? 4 : 3, b.pow ? '#ffd9a0' : '#fff6c8'), b.x, by); F.draw(g);
       if (phase === 'serve' && Math.floor(t * 4) % 2) A.text(g, sv ? 'YOUR SERVE' : R.name + ' SERVES', 120, sv ? NET + 50 : NET - 58, '#fff6c8', 1, 'center');
-      for (const m of msgs) { A.text(g, m.s, m.x + 1, m.y + 1, '#140e1c', 1, 'center'); A.text(g, m.s, m.x, m.y, m.c, 1, 'center'); }
+      for (const m of msgs) { A.text(g, m.s, m.x + 1, m.y + 1, '#140e1c', m.z, 'center'); A.text(g, m.s, m.x, m.y, m.c, m.z, 'center'); }
+      if (phase === 'play' && rally >= 4) A.text(g, 'RALLY ' + rally, 224, NET + 26, 'rgba(127,232,255,.55)', 1, 'right');
       g.restore(); if (flash > 0 && Math.floor(flash * 12) % 2) { K.box(g, 0, 0, W, 2, '#ff5a4a'); K.box(g, 0, 318, W, 2, '#ff5a4a'); }
       /* hearts and cup progress */
       for (let i = 0; i < 3; i++) K.put(g, K.heart(), 10 + i * 13, 311, i < hearts ? null : { a: .22 });
       for (let i = 0; i < 5; i++) { K.box(g, 189 + i * 10, 306, 8, 9, '#140e1c'); K.box(g, 190 + i * 10, 307, 6, 7, i < round || (phase === 'done' && me >= WIN) ? '#ffd23c' : i === round ? (Math.floor(t * 3) % 2 ? '#ffffff' : RIV[i].col) : '#3a3448'); }
       if (phase === 'intro' || phase === 'end') { K.box(g, 14, 108, 212, 84, '#140e1c'); K.box(g, 16, 110, 208, 80, '#241c36'); K.box(g, 16, 110, 208, 2, phase === 'end' && me < WIN ? '#5c6678' : R.col);
-        A.text(g, banner[0], 120, 120, '#aab4c2', 2, 'center'); A.text(g, banner[1], 120, 138, '#fff6c8', banner[1].length > 13 ? 2 : 3, 'center'); A.text(g, banner[2], 120, 168, '#ffd23c', banner[2].length > 25 ? 1 : 2, 'center');
-        if (phase === 'intro') K.put(g, head(round), 36, 148, { sc: 2 }); } }
+        A.text(g, banner[0], 120, 120, '#aab4c2', 2, 'center'); A.text(g, banner[1], 120, 138, '#fff6c8', banner[1].length > 13 ? 2 : 3, 'center'); A.text(g, banner[2], 120, 172, '#ffd23c', banner[2].length > 25 ? 1 : 2, 'center');
+        if (phase === 'intro') K.put(g, head(round), 36, 144, { sc: 2 }); } }
   };
 } });

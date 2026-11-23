@@ -7,7 +7,7 @@ init(A) {
   const cl = (v, a, b) => Math.max(a, Math.min(b, v));
   /* col: rival + wall colour, ai: rival speed, see: how early it reads the ball, err: its aim error, sp/max: ball speed */
   const COURTS = [
-    { name: 'TRAINING HALL', tip: 'FIRST TO 5 POINTS WINS', col: '#e8231e', floor: '#123a4a', ai: 72, see: 130, err: 24, sp: 150, max: 310 },
+    { name: 'TRAINING HALL', tip: 'FIRST TO FIVE POINTS WINS', col: '#e8231e', floor: '#123a4a', ai: 60, see: 130, err: 24, sp: 150, max: 270 },
     { name: 'BUMPER COURT', tip: 'WATCH THE BUMPERS!', col: '#ff9a2a', floor: '#1c3460', ai: 90, see: 150, err: 19, sp: 165, max: 330, bump: 1 },
     { name: 'STAR COURT', tip: 'HIT A STAR FOR A POWER!', col: '#b05ae8', floor: '#2c2458', ai: 108, see: 175, err: 15, sp: 175, max: 350, stars: 1 },
     { name: 'SLIDING GATES', tip: 'MIND THE GATES!', col: '#3fa84a', floor: '#14403a', ai: 126, see: 205, err: 12, sp: 185, max: 370, gates: 1, stars: 1 },
@@ -18,7 +18,7 @@ init(A) {
 
   /* side 0 = top (rival or player two), side 1 = bottom (you) */
   const px = [120, 120], sc = [0, 0], big = [0, 0], ice = [0, 0], kick = [0, 0];
-  let round = 0, hearts = 3, C = COURTS[0], phase = 'intro', tmr = 2.4, t = 0, human = 0, two = false;
+  let round = 0, hearts = 3, C = COURTS[0], phase = 'intro', tmr = 2.4, t = 0, human = 0, two = false, duo = false;
   let b = { x: 120, y: 160, vx: 0, vy: 0, d: 1, zoom: false }, sp = 0, rally = 0, aim = 0, shake = 0, sx = 0, sy = 0;
   let bumps = [], gates = [], star = null, starT = 4, trail = [], msgs = [], banner = [];
   const pw = i => big[i] > 0 ? 68 : 48;
@@ -26,7 +26,7 @@ init(A) {
   const hud = () => A.info('Court ' + Math.min(5, round + 1) + '/5' + (two ? ' · 2P' : ''));
 
   function startMatch() {
-    C = COURTS[round]; sc[0] = sc[1] = 0; big[0] = big[1] = ice[0] = ice[1] = 0; px[0] = px[1] = 120; star = null; starT = 4; trail = [];
+    C = COURTS[round]; duo = two; sc[0] = sc[1] = 0; big[0] = big[1] = ice[0] = ice[1] = 0; px[0] = px[1] = 120; star = null; starT = 4; trail = [];
     bumps = C.bump ? [{ x: 60, y: 160, f: 0 }, { x: 180, y: 160, f: 0 }] : [];
     gates = C.gates ? [{ x: 120, y: C.bump ? 100 : 118, ph: 0, f: 0 }, { x: 120, y: C.bump ? 220 : 202, ph: 2.6, f: 0 }] : [];
     b = { x: 120, y: 160, vx: 0, vy: 0, d: 1, zoom: false };
@@ -42,18 +42,19 @@ init(A) {
     const a = cl((b.x - px[i]) / (pw(i) / 2) * .95, -1, 1), d = i ? -1 : 1; b.vx = sp * Math.sin(a); b.vy = sp * Math.cos(a) * d; b.y = PY[i] + d * 8;
     aim = A.rnd(-C.err, C.err); F.spark(b.x, b.y, ['#ffffff', i ? ME : C.col], 6, 60); A.beep((i ? 330 : 440) + Math.min(rally, 16) * 12, .05); }
   function point(i) { sc[i]++; shake = .3; F.spark(b.x, i ? 6 : 314, ['#ffffff', '#ffd23c', i ? ME : C.col], 26, 150); A.beep(i ? 780 : 240, .18, 'triangle', .06);
-    if (i) { const n = two ? 50 : 100 * (round + 1) + Math.min(rally, 20) * 5; A.add(n); say('+' + n, 120, 40, '#ffd23c'); }
+    if (i) { const n = duo ? 50 : 100 * (round + 1) + Math.min(rally, 20) * 5; A.add(n); say('+' + n, 120, 40, '#ffd23c'); }
     if (sc[i] < WIN) return serve(i ? 1 : -1);
     phase = 'end'; tmr = 2.8; b.vx = b.vy = 0; b.y = 160; b.x = 120; trail = []; star = null;
-    if (two) banner = ['COURT ' + (round + 1) + ' OF 5', i ? 'BLUE WINS!' : 'TOP WINS!', 'GOOD GAME!'];
+    /* a match a second player joined costs no heart, but only a blue win moves on to the next court */
+    if (duo) banner = ['COURT ' + (round + 1) + ' OF 5', i ? 'BLUE WINS!' : 'TOP WINS!', 'GOOD GAME!'];
     else if (i) { const perfect = !sc[0], n = 300 * (round + 1) + (perfect ? 200 : 0); A.add(n); banner = [perfect ? 'PERFECT MATCH!' : 'COURT CLEAR!', 'YOU WIN!', '+' + n + ' BONUS']; [660, 880, 1100].forEach((f, k) => setTimeout(() => A.beep(f, .12, 'square', .05), k * 110)); }
     else { hearts--; banner = [C.name, hearts ? 'SO CLOSE!' : 'OUT OF HEARTS', hearts ? 'TRY AGAIN - HEARTS LEFT: ' + hearts : 'GOOD TRY!']; A.beep(160, .3, 'sawtooth', .05); } }
   function afterMatch() {
-    if (!two && !hearts) { phase = 'done'; return A.over(false); }
-    if (two || sc[1] >= WIN) round++;
-    if (round >= COURTS.length) { phase = 'done'; if (!two) A.add(hearts * 250); return A.over(true); }
+    if (!duo && !hearts) { phase = 'done'; return A.over(false); }
+    if (sc[1] >= WIN) round++;
+    if (round >= COURTS.length) { phase = 'done'; if (!duo) A.add(hearts * 250); return A.over(true); }
     startMatch(); }
-  function power(i, k, x, y) { say(POW[k][1], x, y - 12, POW[k][0]); F.spark(x, y, ['#ffffff', POW[k][0]], 16, 110); A.beep(990, .12, 'triangle', .06); if (i && !two) A.add(25);
+  function power(i, k, x, y) { say(POW[k][1], x, y - 12, POW[k][0]); F.spark(x, y, ['#ffffff', POW[k][0]], 16, 110); A.beep(990, .12, 'triangle', .06); if (i && !duo) A.add(25);
     if (k === 'big') big[i] = 10; else if (k === 'ice') ice[1 - i] = 3.5; else if (!b.zoom) { b.zoom = true; b.vx *= 1.3; b.vy *= 1.3; } }
   /* where the ball will cross the top paddle line, with wall bounces (the rival ignores bumpers and gates) */
   function predict() { let x = (b.x + b.vx * (b.y - 26) / -b.vy - 4) % 464; if (x < 0) x += 464; return (x > 232 ? 464 - x : x) + 4; }
@@ -61,8 +62,8 @@ init(A) {
     if (dir) px[i] += dir * (slow ? 95 : 270) * dt; else if (tg != null) px[i] = slow ? px[i] + cl(tg - px[i], -95 * dt, 95 * dt) : tg; }
   function controls(dt) { let tg = [null, null]; const top = (A.raw.d ? 1 : 0) - (A.raw.a ? 1 : 0);
     if (A.ptr.moved && !A.ptrs.length) tg[1] = A.ptr.x;
-    for (const p of A.ptrs) tg[p.y > 160 ? 1 : 0] = p.x;
-    if (top || tg[0] != null) { human = 8; if (!two) { two = true; hud(); } } else if (human > 0 && (human -= dt) <= 0) { two = false; hud(); }
+    for (const p of A.ptrs) tg[p.y0 > 160 ? 1 : 0] = p.x; /* a finger belongs to the half it started in, so a drifting finger never grabs the rival paddle */
+    if (top || tg[0] != null) { human = 8; if (!two) { two = duo = true; hud(); } } else if (human > 0 && (human -= dt) <= 0) { two = false; hud(); }
     move(1, (A.keys.right ? 1 : 0) - (A.keys.left ? 1 : 0), tg[1], dt);
     if (two) move(0, top, tg[0], dt);
     else { let x = 120, v = C.ai * (ice[0] > 0 ? .35 : 1);
@@ -103,7 +104,7 @@ init(A) {
       A.text(g, sc[1], 121, 201, 'rgba(0,0,0,.3)', 6, 'center'); A.text(g, sc[1], 120, 200, K.mix(C.floor, ME, .6), 6, 'center');
       if (!two) for (let i = 0; i < hearts; i++) K.put(g, K.heart(), 12 + i * 13, 148);
       for (let i = 0; i < 5; i++) K.box(g, 193 + i * 8, 145, 6, 6, i < round ? '#ffd23c' : i === round && t * 3 % 2 < 1 ? '#ffffff' : '#0d1626');
-      for (const q of bumps) { K.shadow(g, q.x + 2, q.y + 8, 9, 3); K.put(g, K.disc(9, q.f > 0 ? '#ffffff' : C.col, true), q.x, q.y); }
+      for (const q of bumps) { K.shadow(g, q.x + 2, q.y + 8, 9, 3); K.put(g, K.disc(9, q.f > 0 ? '#ffffff' : '#b8c0d4'), q.x, q.y); K.put(g, K.disc(5, C.col, true), q.x, q.y); }
       for (const q of gates) { K.shadow(g, q.x + 2, q.y + 6, 20, 2); K.put(g, K.block(40, 8, q.f > 0 ? '#ffffff' : C.col, 'r'), q.x, q.y); }
       if (star && (star.t > 2 || t * 8 % 2 < 1)) { const c = POW[star.k][0], y = star.y + Math.round(Math.sin(t * 4) * 2); K.shadow(g, star.x, star.y + 10, 6, 2); K.put(g, K.star2(c, 15), star.x, y);
         g.fillStyle = '#ffffff'; g.fillRect(Math.round(star.x + Math.cos(t * 3) * 10), Math.round(y + Math.sin(t * 3) * 10), 1, 1); g.fillRect(Math.round(star.x - Math.cos(t * 3) * 10), Math.round(y - Math.sin(t * 3) * 10), 1, 1); }
@@ -120,7 +121,7 @@ init(A) {
       for (const m of msgs) { g.globalAlpha = cl(m.t * 3, 0, 1); A.text(g, m.s, m.x + 1, m.y + 1, '#140e1c', 2, 'center'); A.text(g, m.s, m.x, m.y, m.c, 2, 'center'); } g.globalAlpha = 1;
       if (phase === 'intro' || phase === 'end') { K.box(g, 14, 126, 212, 68, '#140e1c'); K.box(g, 16, 128, 208, 64, C.col); K.box(g, 18, 130, 204, 60, '#1b1e29');
         A.text(g, banner[0], 120, 137, '#5fe3d6', 1, 'center'); A.text(g, banner[1], 120, 149, '#ffffff', 2, 'center'); A.text(g, banner[2], 120, 171, '#ffd23c', 1, 'center');
-        if (phase === 'end' && !two && sc[1] >= WIN) { K.put(g, cup, 34, 160); K.put(g, cup, 206, 160); } }
+        if (phase === 'end' && !duo && sc[1] >= WIN) { K.put(g, cup, 34, 160); K.put(g, cup, 206, 160); } }
       g.restore(); }
   };
 } });

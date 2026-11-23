@@ -6,10 +6,10 @@ init(A) {
   const K = Art, W = 168, T = 24, HUD = 24, PI = Math.PI;
   const D = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]]; /* dx, dy, my bit, neighbour's bit */
   const rot = v => ((v << 1) | (v >> 3)) & 15, bits = v => (v & 1) + (v >> 1 & 1) + (v >> 2 & 1) + (v >> 3 & 1);
-  const TIPS = { 1: 'TURN PIPES TO WATER EVERY TILE', 2: 'CLOCKS GIVE BONUS TIME', 3: 'BOLTED PIPES ARE ALREADY RIGHT', 4: 'GRAB THE COINS', 5: 'BIGGER BOARD!', 6: 'ICY PIPES NEED TWO TAPS', 9: 'GIANT BOARD!' };
+  const TIPS = { 1: 'TURN PIPES TO WATER EVERY TILE', 2: 'CLOCKS GIVE BONUS TIME', 3: 'BOLTED PIPES ARE ALREADY RIGHT', 4: 'GRAB THE COINS', 5: 'BIGGER BOARD!', 6: 'TAP ICE ONCE TO CRACK IT', 9: 'GIANT BOARD!' };
   const S = K.fx(), floats = [];
   let lvl = 1, n, N, m, sol, lock, ice, bonus, lit, dist, an, bump, src, ox, oy;
-  let time = 60, grant = 0, spent = 0, turns = 0, par = 0, wet = 0, maxD = 0, stars = 0, pts = 0;
+  let time = 90, grant = 0, spent = 0, turns = 0, par = 0, wet = 0, maxD = 0, stars = 0, pts = 0;
   let phase = 'intro', pt = 0, cur = 0, showCur = false, shake = 0, tick = 0, drip = 0, lastSec = 99;
 
   /* ---------- sprites (cached by K.spr) ---------- */
@@ -28,7 +28,7 @@ init(A) {
   const flower = v => K.spr('pipe-flow-fl' + v, 14, 14, g => { if (!v) { K.ell(g, 0, 0, 4.2, 4.2, '#5a7a4a'); K.ell(g, -1, -1, 2, 2, '#7a9a5a'); K.box(g, -1, 1, 3, 1, '#3a5230'); return; }
     for (let i = 0; i < 4; i++) { const a = i * PI / 2; K.ell(g, Math.cos(a) * 3.8, Math.sin(a) * 3.8, 2.8, 2.8, i & 1 ? '#ff8ab0' : '#ff5a8a'); } K.ell(g, 0, 0, 2.3, 2.3, '#ffd23c'); K.box(g, -1, -1, 1, 1, '#fff6c8'); }, { L: 10 });
   const clock = () => K.spr('pipe-flow-clock', 12, 12, g => { K.ell(g, 0, 0, 5.6, 5.6, '#e8231e'); K.ell(g, 0, 0, 4.2, 4.2, '#fffbea'); K.box(g, -.5, -3, 1, 3.5, '#1a1222'); K.box(g, 0, -.5, 3, 1, '#1a1222'); }, { L: 10 });
-  const iceSpr = () => K.spr('pipe-flow-ice', 24, 24, g => { for (let y = -11; y < 11; y++) for (let x = -11; x < 11; x++) if ((x + y + 60) % 3 === 0) K.box(g, x, y, 1, 1, '#bfeaff');
+  const iceSpr = () => K.spr('pipe-flow-ice', 24, 24, g => { for (let y = -11; y < 11; y++) for (let x = -11; x < 11; x++) if ((x + y + 60) % 4 === 0) K.box(g, x, y, 1, 1, '#bfeaff');
     K.box(g, -11, -11, 22, 1, '#ffffff'); K.box(g, -11, -11, 1, 22, '#ffffff'); K.box(g, -11, 10, 22, 1, '#6fb8ee'); K.box(g, 10, -11, 1, 22, '#6fb8ee');
     for (let i = 0; i < 6; i++) { K.box(g, -8 + i, -3 - i, 1, 1, '#ffffff'); K.box(g, -5 + i, -1 - i, 1, 1, '#ffffff'); K.box(g, 2 + i, 8 - i, 1, 1, '#ffffff'); } }, { ol: 0, L: 10 });
 
@@ -77,7 +77,6 @@ init(A) {
 
   gen();
   return {
-    peek: () => ({ lvl, n, m, sol, lock, ice, ox, oy, phase, time, turns, par, wet }), /* read-only view for automated play tests */
     tap: press, swipe(d, x, y) { press(x, y); }, /* a sloppy, slightly dragged tap still counts */
     key(k) { if (phase === 'done') { if (k === 'a' && pt > .5) next(); return; } showCur = true; const x = cur % n, y = (cur - x) / n;
       if (k === 'a') turn(cur); else { cur = k === 'left' ? y * n + (x + n - 1) % n : k === 'right' ? y * n + (x + 1) % n : k === 'up' ? ((y + n - 1) % n) * n + x : ((y + 1) % n) * n + x; A.beep(300, .015); } },
@@ -110,7 +109,7 @@ init(A) {
         else if (bonus[i] === 1) K.put(g, clock(), X, Y + Math.round(Math.sin(tick * 5 + i)));
         else if (bonus[i] === 2) K.put(g, K.coin(Math.floor(tick * 7 + i) % 4), X, Y);
         else if (bits(mk) === 1) K.put(g, flower(on ? 1 : 0), X, Y);
-        if (ice[i]) K.put(g, iceSpr(), X, Y); }
+        if (ice[i]) K.put(g, iceSpr(), X, Y, { a: .8 }); }
       if (showCur && phase !== 'done' && phase !== 'wave') { const X = cx(cur) - 12, Y = cy(cur) - 12, c = Math.floor(tick * 4) & 1 ? '#ffd23c' : '#ffffff';
         for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { K.box(g, X + a * 18, Y + b * 22, 6, 2, c); K.box(g, X + a * 22, Y + b * 18, 2, 6, c); } }
       S.draw(g); for (const f of floats) { A.text(g, f.s, f.x + 1, f.y + 1, '#140e1c', 1, 'center'); A.text(g, f.s, f.x, f.y, f.c, 1, 'center'); }

@@ -11,7 +11,7 @@ init(A) {
   let grid, dots, total, pl, en, want = null, lives = 3, lvl = 1, tm = 0, scared = 0, sdur = 6, frozen = 0, combo = 0, mode = 0, modeT = 0;
   let dead = 0, rdy = 0, clr = 0, shake = 0, clean = true, fruit = null, fruitAt = [], pops = [], won = false;
   const open = (x, y) => x >= 0 && y >= 0 && x < GW && y < GH && grid[y][x] !== 1;
-  const info = () => A.info('LIVES ' + lives + '  MAZE ' + lvl);
+  const info = () => A.info('MAZE ' + lvl + ' \u2665 ' + lives);
   const px = e => (e.x + e.dx * e.p) * T + 6, py = e => (e.y + e.dy * e.p) * T + 6;
   const pop = (x, y, s, c) => pops.push({ x: Math.max(16, Math.min(212, x)), y, s, c: c || '#ffffff', l: 1 });
 

@@ -13,7 +13,7 @@ init(A) {
   let aim = { x: 120, y: 78 }, ball = null, kp = { x: 120, y: 90, tx: 120, ty: 90, rd: 0, dive: 0, ln: 0, dl: 0 }, kv = {}, wind = 0, wx = 120, tg = null;
   let sh = 0, net = 0, cheer = 0, held = 0, blockP = 0, kick = 0, wHit = 0, pop = '', popT = 0;
   const info = () => A.info('ROUND ' + (r + 1) + ' OF ' + R.length);
-  const hw = () => cfg.wall * 6 + 4, wallX = () => cfg.mv ? 120 + Math.sin(tm * .8) * 24 : wx;
+  const hw = () => cfg.wall * 6 + 4, wallX = t => cfg.mv ? 120 + Math.sin((t == null ? tm : t) * .8) * 24 : wx;
   const ax = () => clamp(aim.x + (cfg.wob ? Math.sin(tm * 3.1) * 9 : 0), 24, 216), ay = () => clamp(aim.y + (cfg.wob ? Math.cos(tm * 2.3) * 6 : 0), 26, 110);
   const tune = (f, i) => setTimeout(() => A.beep(f, .12, 'triangle'), i * 110);
   /* show a banner for a while, then carry on */
@@ -74,8 +74,8 @@ init(A) {
       /* goal: net (shakes on a goal), the patch the wall blocks, bonus target, frame */
       const ns = net > 0 ? Math.floor(tm * 30) % 2 : 0; K.box(g, GX0, GY0, GX1 - GX0, GY1 - GY0, 'rgba(8,30,14,.55)'); g.fillStyle = 'rgba(230,245,230,.4)';
       for (let x = GX0 + 4 - ns; x < GX1; x += 6) g.fillRect(x, GY0, 1, GY1 - GY0); for (let y = GY0 + 4 + ns; y < GY1; y += 6) g.fillRect(GX0, y, GX1 - GX0, 1);
-      const WX = Math.round(wallX());
-      if (cfg.wall && ph !== 'msg' || cfg.wall && b) { const c = 2 * WX - 120 + wind * 4, x0 = clamp(c - 2 * hw(), GX0, GX1), x1 = clamp(c + 2 * hw(), GX0, GX1); K.box(g, x0, HI, x1 - x0, GY1 - HI, 'rgba(10,8,24,.62)');
+      const WX = Math.round(wallX()); /* while aiming, the blocked patch shows where a sliding wall will be when the ball gets there */
+      if (cfg.wall && ph !== 'msg' || cfg.wall && b) { const c = 2 * (ph === 'aim' ? wallX(tm + T / 2) : WX) - 120 - wind * 4, x0 = clamp(c - 2 * hw(), GX0, GX1), x1 = clamp(c + 2 * hw(), GX0, GX1); K.box(g, x0, HI, x1 - x0, GY1 - HI, 'rgba(10,8,24,.62)');
         g.fillStyle = 'rgba(255,138,154,.55)'; for (let x = x0 + 2; x < x1 - 2; x += 6) g.fillRect(x, HI, 3, 1); }
       if (tg) { const s = 1 + (Math.floor(tm * 4) % 2) * .12; K.put(g, K.spr('penalty-kick:tg', 22, 22, q => { K.ell(q, 0, 0, 11, 11, '#e8231e'); K.ell(q, 0, 0, 8, 8, '#f2f5f8'); K.ell(q, 0, 0, 5, 5, '#e8231e'); }), tg.x, tg.y); K.put(g, K.star2('#ffd23c', 11), tg.x, tg.y, { sc: s }); }
       for (const [a, c, d, e] of [[GX0 - 5, GY0 - 5, GX1 - GX0 + 10, 5], [GX0 - 5, GY0 - 5, 5, GY1 - GY0 + 5], [GX1, GY0 - 5, 5, GY1 - GY0 + 5]]) { K.box(g, a, c, d, e, OL); K.box(g, a + 1, c + 1, d - 2, e - 2, '#f2f5f8'); K.box(g, a + 1, c + e - 2, d - 2, 1, '#aab4c2'); }

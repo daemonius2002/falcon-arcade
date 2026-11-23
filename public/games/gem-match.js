@@ -1,5 +1,5 @@
 Arcade.game('gem-match', { w: 168, h: 192,
-help: 'Swipe a gem onto its neighbour to swap them (or tap one gem, then the one next to it). Keyboard: arrows move the cursor, Space grabs a gem, then an arrow swaps it. Line up 3 or more of a kind. Each level shows what to collect at the top — finish it before your moves run out and spare moves become bonus points. Line up 4 for an arrow gem that zaps a whole line, 5 or an L shape for a star gem that blasts its neighbours. From level 2 smash rocks by matching next to them; later, frozen gems cannot be swapped until a match or a blast breaks the ice.',
+help: 'Swipe a gem onto its neighbour to swap them (or tap one gem, then the one next to it). Keyboard: arrows move the cursor, Space grabs a gem, then an arrow swaps it. Line up 3 or more of a kind. Each level shows what to collect at the top — finish it before your moves run out and spare moves become bonus points. Line up 4 for an arrow gem that zaps a whole line, 5 or an L shape for a burst gem (white rays) that blasts its neighbours. From level 2 smash rocks by matching next to them; later, frozen gems cannot be swapped until a match or a blast breaks the ice.',
 init(A) {
   const K = Art, C = 7, RW = 7, T = 24, OY = 24, N = C * RW, ROCK = 6, F = K.fx(), DIRS = ['left', 'right', 'up', 'down'];
   const COLS = ['#e8231e', '#ffd23c', '#3fd45a', '#3fa8e0', '#b06ae0', '#ff8a1e'];
@@ -7,7 +7,7 @@ init(A) {
     idle = 0, hint = null, shake = 0, floats = [], fly = [], bonus = 0, tip = '', tipT = 0;
 
   /* ---------- board helpers ---------- */
-  const cell = v => ({ v, sp: 0, ice: 0, x: 0, y: 0, vy: 0 }); /* sp: 1 row arrow, 2 column arrow, 3 star; x/y: drawing offset while sliding */
+  const cell = v => ({ v, sp: 0, ice: 0, x: 0, y: 0, vy: 0 }); /* sp: 1 row arrow, 2 column arrow, 3 burst; x/y: drawing offset while sliding */
   const val = (x, y) => x < 0 || y < 0 || x >= C || y >= RW || !b[y * C + x] ? -1 : b[y * C + x].v;
   const px = i => (i % C) * T + 12, py = i => OY + Math.floor(i / C) * T + 12;
   const nb = (i, d) => { const x = i % C + (d === 'left' ? -1 : d === 'right' ? 1 : 0), y = Math.floor(i / C) + (d === 'up' ? -1 : d === 'down' ? 1 : 0); return i < 0 || x < 0 || y < 0 || x >= C || y >= RW ? -1 : y * C + x; };
@@ -81,6 +81,7 @@ init(A) {
 
   /* ---------- sprites (own keys are prefixed with the game id) ---------- */
   const arrow = h => K.spr('gem-match-arrow' + h, 14, 14, g => { if (!h) g.rotate(Math.PI / 2); K.box(g, -4, -1, 8, 2, '#ffffff'); K.part(g, [-7, 0, -3, -4, -3, 4], '#ffffff'); K.part(g, [7, 0, 3, -4, 3, 4], '#ffffff'); });
+  const burst = () => K.spr('gem-match-burst', 16, 16, g => { for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; for (let r = 3; r < (k % 2 ? 6 : 8); r++) K.box(g, Math.round(Math.cos(a) * r) - 1, Math.round(Math.sin(a) * r) - 1, 2, 2, '#ffffff'); } K.box(g, -2, -2, 4, 4, '#ffe98a'); });
   const ice = () => K.spr('gem-match-ice', 22, 22, g => { g.fillStyle = '#b8e6ff'; for (let y = -11; y < 11; y++) for (let x = -11; x < 11; x++) if (Math.max(Math.abs(x + .5), Math.abs(y + .5)) > 8 ? (x + y) & 1 : (x - y + 44) % 7 === 0) g.fillRect(x, y, 1, 1); K.box(g, -11, -11, 22, 1, '#ffffff'); K.box(g, -11, -11, 1, 22, '#ffffff'); }, { ol: 0 });
   const tile = () => K.spr('gem-match-tile', 22, 22, g => { K.box(g, -11, -11, 22, 22, '#1c1840'); K.box(g, -11, 10, 22, 1, '#3a3470'); K.box(g, 10, -11, 1, 22, '#3a3470'); }, { ol: 0 });
   const icon = (v, n) => v === ROCK ? K.rock(n > 12 ? 9 : 5, 1) : K.gem(v, COLS[v], n);
@@ -91,9 +92,9 @@ init(A) {
     tap(x, y) { const i = cellAt(x, y); if (st !== 'idle' || i < 0) return; cur = -1;
       if (sel >= 0 && DIRS.some(d => nb(sel, d) === i)) tryS(sel, i); else if (sel === i) sel = -1; else if (free(i)) { sel = i; A.beep(600, .03); } else tryS(i, -1); },
     swipe(d, x0, y0) { const i = cellAt(x0, y0); cur = -1; if (i >= 0) tryS(i, nb(i, d)); },
-    key(k) { if (st !== 'idle') return; if (cur < 0) { cur = 24; return; }
-      if (k === 'a') { if (sel >= 0) sel = -1; else if (free(cur)) { sel = cur; A.beep(600, .03); } else tryS(cur, -1); return; }
-      const j = nb(cur, k); if (j < 0) return; if (sel >= 0) tryS(sel, j); cur = j; },
+    key(k) { if (cur < 0) { cur = 24; return; } /* the cursor can move while gems fall; grabbing and swapping wait for the board */
+      if (k === 'a') { if (st !== 'idle') return; if (sel >= 0) sel = -1; else if (free(cur)) { sel = cur; A.beep(600, .03); } else tryS(cur, -1); return; }
+      const j = nb(cur, k); if (j < 0) return; if (sel >= 0) { if (st !== 'idle') return; tryS(sel, j); } cur = j; },
     update(dt) { t += dt; idle += dt; shake = Math.max(0, shake - dt); tipT -= dt; let moving = false; const v = (st === 'mix' ? 420 : 170) * dt;
       for (const f of floats) f.t += dt; for (const f of fly) f.t += dt * 2.2; floats = floats.filter(f => f.t < .9); fly = fly.filter(f => f.t < 1);
       for (const c of b) { if (!c) continue;
@@ -116,7 +117,7 @@ init(A) {
         if (st === 'idle' && idle > 5 && hint && hint.includes(i)) { const o = hint[i === hint[0] ? 1 : 0], w = Math.round(Math.abs(Math.sin(now / 160)) * 3); x += Math.sign(px(o) - px(i)) * w; y += Math.sign(py(o) - py(i)) * w; }
         if (kill.has(i) && !c.ice && !make.has(i)) { sc = Math.max(.15, 1 - t / .24); if (t < .07) { K.put(g, K.star2('#ffffff', 20), x, y); continue; } }
         K.put(g, icon(c.v, 20), x, y, sc ? { sc } : (c.sp || make.has(i)) && Math.floor(now / 250) % 2 ? { sc: 1.1 } : null);
-        if (c.sp && !sc) K.put(g, c.sp === 3 ? K.star('#ffffff') : arrow(c.sp === 1 ? 1 : 0), x, y);
+        if (c.sp && !sc) K.put(g, c.sp === 3 ? burst() : arrow(c.sp === 1 ? 1 : 0), x, y);
         if (c.ice && !(kill.has(i) && blink)) K.put(g, ice(), x, y); }
       for (const [sp, x, y] of beams) { const col = blink ? '#ffffff' : '#ffe98a'; if (sp === 1) K.box(g, 0, OY + y * T + 8, 168, 8, col); else if (sp === 2) K.box(g, x * T + 8, OY, 8, 168, col); else { const X = x * T - T, Y = OY + y * T - T; K.box(g, X, Y, 72, 3, col); K.box(g, X, Y + 69, 72, 3, col); K.box(g, X, Y, 3, 72, col); K.box(g, X + 69, Y, 3, 72, col); } }
       if (st === 'idle' && sel >= 0) frame(g, sel, '#ffffff');

@@ -1,6 +1,6 @@
 /* Falcon Arcade — pixel-arcade look shared by the whole platform */
 :root{color-scheme:dark;--bg:#0d0b14;--ink:#f2efe6;--mut:#b9bfd0;--pan:#1b1e29;--btn:#2a2f3d;--hi:#59627a;--lo:#12141c;--or:#ff9a2a;--cy:#5fe3d6;--go:#ffd23c;--red:#c8321e}
-*{box-sizing:border-box;min-width:0}
+*{box-sizing:border-box;min-width:0;font-feature-settings:"liga" 0,"clig" 0} /* Pixelify Sans joins fi/fl/ff into one wrong glyph */
 html{scroll-padding-top:16px}
 body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.35 "Pixelify Sans",system-ui,sans-serif;overflow-x:clip}
 a{color:var(--ink);text-decoration:none}a:hover{color:var(--go)}
@@ -47,7 +47,7 @@ a.card:hover{background:#252a3a;color:var(--ink);transform:translateY(-2px)}
 .stage{flex:1 1 380px;display:flex;justify-content:center}
 .stin{width:100%;max-width:calc(64dvh*var(--r) + 28px);display:flex;flex-direction:column;gap:12px}
 .stage:fullscreen{background:var(--bg);padding:8px;align-items:center}.stage:fullscreen .stin{max-width:min(100%,calc((100dvh - 250px)*var(--r) + 28px))}
-.gbar{display:flex;justify-content:space-between;gap:10px;font:400 11px "Press Start 2P",monospace;color:var(--mut)}.gbar b{font-weight:400;color:var(--go)}#gI{color:var(--cy);text-align:center}
+.gbar{display:flex;justify-content:space-between;gap:10px;font:400 11px "Press Start 2P",monospace;color:var(--mut)}.gbar b{font-weight:400;color:var(--go)}.gbar>span{white-space:nowrap;flex:none}#gI{color:var(--cy);text-align:center;white-space:normal;flex:0 1 auto} /* only the game info line may wrap */
 .bezel{position:relative;background:var(--pan);padding:14px;box-shadow:inset 4px 4px 0 var(--hi),inset -4px -4px 0 #0c0d12,0 0 0 3px #000}
 #gc{display:block;width:100%;image-rendering:crisp-edges;image-rendering:pixelated;touch-action:none;box-shadow:0 0 0 3px #000;background:#000}
 .gov{position:absolute;inset:14px;background:#0d0b14e0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:12px;text-align:center}

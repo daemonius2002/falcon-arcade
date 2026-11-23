@@ -1,5 +1,5 @@
 Arcade.game('jungle-run', { w: 160, h: 140, pad: 'lr', a: 'JUMP',
-help: 'Run through 6 jungle stages to the flag! Move with left / right, jump with Space, up, JUMP or a tap (hold for a higher jump). Collect fruit and find the gold star hidden in every stage. Jump on snails, bats and frogs to bop them - bop several in one jump for a combo. Thorns always hurt, so jump over them. Stepping logs and drifting logs cross the river, and mushrooms bounce you high. You have 3 hearts: a bump or a splash costs one. A fast run earns a BONUS at the flag.',
+help: 'Run through 6 jungle stages to the flag! Move with left / right, jump with Space, up, JUMP or a tap (hold for a higher jump). Collect fruit and find the gold star hidden in every stage. Jump on snails, bats and frogs to bop them - bop several in one jump for a combo. Thorns always hurt, so jump over them. Stepping logs and drifting logs cross the river, and mushrooms bounce you high. You have 3 hearts: a bump or a splash costs one, and each flag gives one back. A fast run earns a BONUS at the flag.',
 init(A) {
   const K = Art, ID = 'jungle-run-', LAST = 6, G0 = 104;
   const HO = { id: 'jr', skin: '#f0b890', shirt: '#3fa8e0', pants: '#5a4a6a', hat: 'cap', hatc: '#e8231e' };
@@ -13,7 +13,7 @@ init(A) {
   const flag = f => K.spr(ID + 'flag' + f, 22, 44, g => { K.box(g, -8, -20, 2, 42, '#c08a4a'); K.box(g, -7, -20, 1, 42, '#6a4420'); K.ell(g, -7, -20, 2, 2, '#ffd23c'); K.part(g, [-6, -18, 9, f ? -14 : -12, -6, f ? -7 : -8], K.lin(g, -6, 0, 9, 0, '#ffd23c', '#ff8a1e')); K.box(g, -11, 19, 8, 3, '#6a4420'); });
   const HEART = A.spr(['.rr.rr.', 'rwrrrrr', 'rrrrrrr', '.rrrrr.', '..rrr..', '...r...'], { r: '#ff4060', w: '#ffc0c8' }), NOHEART = A.spr(['.rr.rr.', 'r..r..r', 'r.....r', '.r...r.', '..r.r..', '...r...'], { r: '#5a3a4a' });
   const S = K.fx();
-  let st = 1, lives = 3, stars = 0, plats, items, foes, haz, shr, pops, goal, len, cam, far, tm, clr = 0, cb = 0, intro, sh = 0, inv = 0, coy = 0, buf = 0, combo = 0, kb = 0, wasDown = false, safe, pl, shown = '';
+  let st = 1, lives = 3, stars = 0, plats, items, foes, haz, shr, pops, goal, len, cam, far, tm, clr = 0, cb = 0, heal = 0, intro, sh = 0, inv = 0, coy = 0, buf = 0, combo = 0, kb = 0, wasDown = false, safe, pl, shown = '';
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const pop = (s, x, y, c) => pops.push({ s, x, y, l: .8, c: c || '#ffd23c' });
   const tune = n => n.forEach((f, i) => setTimeout(() => A.beep(f, .12, 'triangle'), i * 90));
@@ -52,7 +52,7 @@ init(A) {
   build();
   return {
     key(k) { if (k === 'a' || k === 'up') buf = .13; },
-    update(dt) {
+    update(dt) { for (const p of pops) { p.l -= dt; p.y -= 21 * dt; }
       if (clr > 0) { clr -= dt; if (Math.random() < .3) S.spark(goal + A.rnd(-20, 24), A.rnd(40, 90), ['#ffd23c', '#ff8a9a', '#5fe3d6'], 4, 50);
         if (clr <= 0) { if (st >= LAST) { A.add(lives * 100); A.over(true); } else { st++; build(); } } return; }
       tm += dt; intro -= dt; sh = Math.max(0, sh - dt); inv = Math.max(0, inv - dt); hud();
@@ -81,14 +81,14 @@ init(A) {
         if (f.t === 2) { if (f.air) { f.x += f.d * 42 * dt; f.vy += 520 * dt; f.h += f.vy * dt; if (f.h >= 0) { f.h = 0; f.air = 0; f.w = .85 - st * .05; } } else if ((f.w -= dt) <= 0) { if (f.x + f.d * 26 < f.l || f.x + f.d * 26 > f.r) f.d *= -1; f.air = 1; f.vy = -150; } f.cy = f.y + f.h - 5; }
         else { f.x += f.d * f.sp * dt; if (f.x < f.l) f.d = 1; else if (f.x > f.r) f.d = -1; if (f.t) { f.ph += dt * 3; f.cy = f.y + Math.sin(f.ph) * 8; } else f.cy = f.y - 5; }
         if (Math.abs(f.x - pl.x) < 10 && pl.y > f.cy - 5 && pl.y - 20 < f.cy + 4) {
-          if (pl.vy > 0 && pl.y < f.cy + 3) { f.dead = 1; combo++; const pts = 50 * Math.min(combo, 5); A.add(pts); pop((combo > 1 ? 'COMBO ' : '') + '+' + pts, f.x, f.cy - 8, combo > 1 ? '#5fe3d6' : '#ffd23c'); pl.vy = held ? -215 : -165; pl.boost = 0; sh = .08; A.beep(280 + combo * 80, .09); S.spark(f.x, f.cy, ['#ffffff', '#e0b0ff', '#5fd04a'], 10, 70); }
+          if (pl.y < f.cy + 3 && (pl.vy > 0 || pl.y < f.cy)) { /* feet above its middle counts as a bop, even on the way up */ f.dead = 1; combo++; const pts = 50 * Math.min(combo, 5); A.add(pts); pop((combo > 1 ? 'COMBO ' : '') + '+' + pts, f.x, f.cy - 8, combo > 1 ? '#5fe3d6' : '#ffd23c'); pl.vy = held ? -215 : -165; pl.boost = 0; sh = .08; A.beep(280 + combo * 80, .09); S.spark(f.x, f.cy, ['#ffffff', '#e0b0ff', '#5fd04a'], 10, 70); }
           else { hurt(pl.x < f.x ? -1 : 1); if (lives <= 0) return; } } }
       for (const h of haz) if (Math.abs(h.x - pl.x) < h.hw + 2 && pl.y > h.y - 9 && pl.y - 20 < h.y) { hurt(pl.x < h.x ? -1 : 1); if (lives <= 0) return; }
       const d = Math.floor(pl.x / 16); if (d > far) { A.add(d - far); far = d; }
       /* splash! back to the last solid ground */
       if (pl.y > 138) { S.spark(pl.x, 130, ['#ffffff', '#7fc0f0', '#3f8ad0'], 16, 90); lose(); if (lives <= 0) return; pl.x = safe.x + 14; pl.y = safe.y; pl.vx = pl.vy = 0; pl.on = safe; inv = 2; kb = 0; cam = clamp(pl.x - 60, 0, len - 160); }
       /* the flag */
-      if (pl.x > goal - 6 && pl.on) { cb = 100 + bonus(); A.add(cb); clr = 2.4; tune([660, 880, 990, 1320]); }
+      if (pl.x > goal - 6 && pl.on) { cb = 100 + bonus(); A.add(cb); clr = 2.4; heal = lives < 3 && st < LAST; if (heal) lives++; /* each flag gives a lost heart back */ tune([660, 880, 990, 1320]); }
     },
     draw(g) { const t = performance.now() / 1000, c = Math.round(cam), ci = st - 1;
       g.drawImage(K.T.sky(160, 140, SKY[ci]), 0, 0);
@@ -111,13 +111,13 @@ init(A) {
         if (f.t === 1) K.put(g, K.bat(Math.floor(t * 8) & 1), f.x, f.cy == null ? f.y : f.cy); else if (f.t === 2) K.put(g, frog(f.air ? 1 : 0), f.x, f.y + f.h - 5, o); else K.put(g, K.snail(), f.x, f.y - 5, o); }
       if (inv <= 0 || Math.floor(t * 12) & 1) { const mv = Math.abs(pl.vx) > 12; K.put(g, K.guy(HO, !pl.on ? 3 : mv ? 1 + (Math.floor(pl.x / 7) & 1) : 0), pl.x, pl.y - 14, pl.f < 0 ? { flip: 1 } : null); }
       S.draw(g);
-      for (const p of pops) { p.l -= 1 / 60; p.y -= .35; if (p.l > 0) { A.text(g, p.s, p.x + 1, p.y + 1, '#12101c', 1, 'center'); A.text(g, p.s, p.x, p.y, p.c, 1, 'center'); } } if (pops.length > 12) pops.splice(0, 6);
+      for (const p of pops) { if (p.l > 0) { A.text(g, p.s, p.x + 1, p.y + 1, '#12101c', 1, 'center'); A.text(g, p.s, p.x, p.y, p.c, 1, 'center'); } } if (pops.length > 12) pops.splice(0, 6);
       g.restore();
       /* HUD: hearts, progress to the flag */
       for (let i = 0; i < 3; i++) g.drawImage(i < lives ? HEART : NOHEART, 3 + i * 9, 3); for (let i = 0; i < stars; i++) K.put(g, K.star2('#ffd23c', 7), 6 + i * 8, 15);
       A.text(g, 'BONUS ' + (clr > 0 ? cb - 100 : bonus()), 65, 4, '#12101c', 1, 'center'); A.text(g, 'BONUS ' + (clr > 0 ? cb - 100 : bonus()), 64, 3, '#ffd23c', 1, 'center'); K.box(g, 99, 4, 58, 4, '#12101c'); K.box(g, 100, 5, 56, 2, '#2a4a3a'); K.box(g, 100, 5, Math.round(clamp(pl.x / goal, 0, 1) * 56), 2, '#5fe3d6'); K.box(g, 155, 2, 1, 6, '#ffd23c'); K.box(g, 156, 2, 3, 3, '#ff8a1e');
       const ban = (a, b, col) => { K.box(g, 0, 40, 160, 26, 'rgba(8,4,16,.6)'); A.text(g, a, 80, 44, col, 2, 'center'); A.text(g, b, 80, 58, '#ffffff', 1, 'center'); };
-      if (clr > 0) ban(st >= LAST ? 'JUNGLE CLEAR!' : 'STAGE CLEAR!', 'BONUS +' + cb, '#ffd23c'); else if (intro > 0) ban('STAGE ' + st, HINT[ci], '#5fe3d6');
+      if (clr > 0) ban(st >= LAST ? 'JUNGLE CLEAR!' : 'STAGE CLEAR!', 'BONUS +' + cb + (heal ? '  +1 HEART' : ''), '#ffd23c'); else if (intro > 0) ban('STAGE ' + st, HINT[ci], '#5fe3d6');
     }
   };
 } });

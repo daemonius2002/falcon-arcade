@@ -20,7 +20,7 @@ init(A) {
   let hi = 0, H, walls, mv, stars, b, last, ang = 0, pow = 210, hold = 0, strokes = 0, total = 0, got = 0, card = [], dr = null, t = 0;
   let wait = 0, then = null, msg = '', sub = '', intro = 0, shake = 0, rollT = 0, lock = null, lip = 0, hid = false, sunk = false, fin = 0, bonus = 0, bpHit = -1, bpT = 0, trail = 0;
   const moving = () => b.vx !== 0 || b.vy !== 0, inEll = (o, e, k) => { const x = (o.x - e[0]) / (e[2] * k), y = (o.y - e[1]) / (e[3] * k); return x * x + y * y < 1; };
-  const info = () => A.info('HOLE ' + (hi + 1) + '/9 · PUTTS ' + strokes);
+  const info = () => A.info('HOLE ' + (hi + 1) + '/9'); /* short: longer text wraps the header; par and putts are in the canvas HUD */
 
   /* ---- art ---- */
   const blob = (kind, e, seed) => K.spr('mini-golf-' + kind + e[2] + '_' + e[3] + '_' + seed, e[2] * 2, e[3] * 2, g => { const c = kind === 's' ? ['#d8b45a', '#ecd08a', '#f6e2a8', '#b88a3a'] : ['#1b5fa8', '#2a80c8', '#4a9ce0', '#12447a'];
@@ -67,7 +67,7 @@ init(A) {
     const pts = 50 + Math.max(0, 2 - d) * 50 + (strokes === 1 ? 100 : 0); A.add(pts); sunk = true; b.x = H.h[0]; b.y = H.h[1]; shake = strokes === 1 ? .3 : .12;
     msg = strokes === 1 ? 'HOLE IN ONE!' : d <= -2 ? 'SUPER PUTT!' : d === -1 ? 'UNDER PAR!' : d === 0 ? 'PAR!' : 'IN ' + strokes + ' PUTTS'; sub = '+' + pts;
     F.spark(b.x, b.y, ['#ffd23c', '#ffffff', '#3fd45a'], d < 0 ? 40 : 22, 120); [660, 880, d < 0 ? 1320 : 990].forEach((f, i) => setTimeout(() => A.beep(f, .14, 'triangle', .05), i * 110)); }
-  function next() { msg = sub = ''; if (++hi < 9) return load(); hi = 8; const par = HOLES.reduce((s, h) => s + h.par, 0); bonus = total <= par ? 100 + (par - total) * 25 : 0; A.add(bonus); fin = 1; wait = 4.5; then = () => A.over(true); A.info(total + ' PUTTS · PAR ' + par); }
+  function next() { msg = sub = ''; if (++hi < 9) return load(); hi = 8; const par = HOLES.reduce((s, h) => s + h.par, 0); bonus = total <= par ? 100 + (par - total) * 25 : 0; A.add(bonus); fin = 1; wait = 4.5; then = () => A.over(true); A.info(total + ' PUTTS'); }
   function roll(dt) { dr = null; rollT += dt; const sp0 = Math.hypot(b.vx, b.vy), hit = Math.max(advance(b, dt, true), bpT === .2 ? 300 : 0);
     if (bpT === .2) { bpT = .19; A.beep(720, .07, 'triangle', .05); F.spark(b.x, b.y, ['#ffd23c', '#ff8a7a', '#ffffff'], 8, 90); shake = .1; }
     else if (hit > 30) { A.beep(170 + Math.min(260, hit * .6), .03); if (hit > 110) F.spark(b.x, b.y, ['#f0c080', '#ffffff'], 4, 50); if (hit > 260) shake = .08; }

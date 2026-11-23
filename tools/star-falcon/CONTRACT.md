@@ -61,3 +61,11 @@ Also write a short Playwright script of your own (Chromium + Playwright are prei
 (deviceScaleFactor 1) to check it visually.
 
 The shipped page has an `<a href="../../index.html">Arcade</a>` back-link in the bottom `#bar`; keep it working.
+
+## v2.0 integration notes (core changes modules can rely on)
+- `FX.onReset` (array of functions) is run by the core "Erase progress" button; push a reset for your `save.<slug>`.
+- `FX.bus = {out, sfx, mus}` exists once `audio()` has created `ac`: `out` feeds a master limiter; core `beep`/`boom`
+  play into `sfx`, music should connect to `mus`. The context is suspended while the tab is hidden.
+- `mk(k, x, y, {heavy: 1})` makes an enemy survive ramming the player (it still hurts the player).
+- `dmg(boss, d)` does nothing while the boss is above y=118 (fly-in); unknown pickup kinds are ignored.
+- The save is sanitised at load (`cr`, `unl`, `diff`, `up.*` clamped). Hangar prices are raised by 24-balance (weapons x3, armor x2, bomb x1.5).

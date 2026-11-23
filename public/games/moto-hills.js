@@ -92,7 +92,7 @@ init(A) {
         if (it.t === 'coin') K.put(g, K.coin((t * 8 + it.x) & 3), ix, iy); else if (it.t === 'can') K.put(g, canS(), ix, iy + Math.sin(t * 5 + it.x) * 1.5); else if (it.t === 'rock') K.put(g, K.rock(6, it.v), ix, iy); else K.put(g, boostS(it.got ? 0 : (t * 8 | 0) & 1), ix + (it.got ? 0 : (t * 10 | 0) % 3), iy, it.got ? { a: .4 } : null); }
       g.save(); g.translate(-cam, oy); S.draw(g); g.restore();
       if (dead !== 1 && (inv <= 0 || (t * 14 | 0) & 1)) { K.shadow(g, x - cam, h(x) + oy + 1, air ? 7 : 10, 2); g.save(); g.translate(Math.round(x - cam), Math.round(y) + oy); g.rotate(ang); const bk = bikeS(wheel & 1); g.drawImage(bk, -(bk.width >> 1), -bk.height + 2); g.restore(); }
-      for (const p of pops) A.text(g, p.s, cl(p.x - cam, 34, 206), p.y + oy - (1.1 - p.l) * 16, p.c, 1, 'center');
+      for (const p of pops) { const px = cl(p.x - cam, 34, 206), py = p.y + oy - (1.1 - p.l) * 16; A.text(g, p.s, px + 1, py + 1, '#140e1c', 1, 'center'); A.text(g, p.s, px, py, p.c, 1, 'center'); }
       /* HUD: fuel, helmets, progress */
       const fw = Math.round(64 * fuel / 100), low = fuel <= 25; K.put(g, canS(), 11, 11); K.box(g, 18, 6, 68, 10, '#140e1c'); K.box(g, 19, 7, 66, 8, '#3a2030'); K.box(g, 20, 8, fw, 6, low ? '#e8231e' : '#ffd23c'); K.box(g, 20, 8, fw, 2, low ? '#ff8a7a' : '#fff6c8'); for (let i = 1; i < 4; i++) K.box(g, 19 + i * 16, 7, 1, 8, '#140e1c');
       for (let i = 0; i < 3; i++) K.put(g, helmS(i < lives ? 1 : 0), 208 + i * 11, 11);

@@ -1,5 +1,5 @@
 /* Kart Cup — a four-race cup on four circuits. Start last on the grid, steer past three rivals,
-   grab coins for turbo, hit boost pads, dodge oil and cones. Finish last and you are out of the cup. */
+   grab coins for turbo, hit boost pads, dodge oil and cones. Finish last twice and you are out of the cup. */
 (function () {
 const K = Art, LAPS = 3, RW = 15, COL = ['#e8231e', '#3fa8e0', '#ffd23c', '#3fd45a'], NAME = ['YOU', 'BLUE', 'GOLD', 'MINT'], ORD = ['1ST', '2ND', '3RD', '4TH'], CUP = [10, 6, 3, 1];
 const nd = a => Math.atan2(Math.sin(a), Math.cos(a));
@@ -38,19 +38,19 @@ function bg(ti) { const t = TR[ti], th = TH[ti], P = path(t); if (t.bg) return t
   for (let i = 0; i < P.length; i += 3) { const p = P[i]; K.box(q, Math.round(p[0]) - 1, Math.round(p[1]) - 1, 2, 2, '#8a8a98'); }
   for (const i of t.pads) K.put(q, padS(), P[i][0], P[i][1], { rot: P[i][2] + Math.PI / 2 });
   q.save(); q.translate(P[0][0], P[0][1]); q.rotate(P[0][2]); for (let i = -15; i < 15; i += 3) { K.box(q, -2, i, 2, 3, (i / 3 & 1) ? '#12101c' : '#ffffff'); K.box(q, 0, i, 2, 3, (i / 3 & 1) ? '#ffffff' : '#12101c'); } q.restore();
-  for (let i = 0, n = 0; i < 500 && n < 24; i++) { const x = K.rnd(8, 232), y = K.rnd(8, 232); if (P.every(p => (p[0] - x) ** 2 + (p[1] - y) ** 2 > 27 * 27)) { n++; K.shadow(q, x + 3, y + 5, 7, 4); K.put(q, th.deco(n), x, y); } }
+  for (let i = 0, n = 0; i < 500 && n < 24; i++) { const x = K.rnd(8, 232), y = K.rnd(8, 232); if ((y > 26 || (x > 34 && x < 186)) && P.every(p => (p[0] - x) ** 2 + (p[1] - y) ** 2 > 27 * 27)) { n++; K.shadow(q, x + 3, y + 5, 7, 4); K.put(q, th.deco(n), x, y); } }
   return (t.bg = k); }
 
 Arcade.game('kart-cup', { w: 240, h: 240, pad: 'lr', a: 'TURBO',
-help: 'A cup of 4 races, 3 laps each. Your red kart drives by itself and starts last: steer with left / right (or hold the left or right half of the screen), down brakes. Stay on the track, the rough ground is slow. Every 3 coins give a turbo: fire it with Space, up or the TURBO button. Orange arrow pads boost you, oil spins you and cones slow you down. Finish a race last and you are out of the cup. Most cup points after 4 races wins!',
+help: 'A cup of 4 races, 3 laps each. Your red kart drives by itself and starts last: steer with left / right (or hold the left or right half of the screen), down brakes. Stay on the track, the rough ground is slow. Every 3 coins give a turbo: fire it with Space, up or the TURBO button. Orange arrow pads boost you, oil spins you and cones slow you down. Finish last in two races and you are out of the cup. Most cup points after 4 races wins!',
 init(A) {
-  const F = K.fx(), S = { race: 0, ph: 'count', t: 3.01, time: 0, clock: 0, ch: 1, coins: 0, fin: 0, shake: 0, msg: '', msgT: 0, wrong: 0, lap: 0, left: 0, out: false, pts: [0, 0, 0, 0], res: null, got: 0, bump: 0 };
+  const F = K.fx(), S = { race: 0, ph: 'count', t: 3.01, time: 0, clock: 0, ch: 1, coins: 0, fin: 0, shake: 0, msg: '', msgT: 0, wrong: 0, lap: 0, left: 0, out: false, lasts: 0, pts: [0, 0, 0, 0], res: null, got: 0, bump: 0 };
   let P, N, T, karts, me, coins, haz;
   const say = (m, t) => { S.msg = m; S.msgT = t || 1.6; };
   const order = () => karts.slice().sort((a, b) => (a.done || 1e5 - a.prog) - (b.done || 1e5 - b.prog));
   const cupOrder = () => karts.slice().sort((a, b) => S.pts[b.i] - S.pts[a.i] || a.i - b.i);
   function setup(r) { T = TR[r]; P = path(T); N = P.length; S.race = r; S.ph = 'count'; S.t = 3.01; S.time = S.fin = S.wrong = S.lap = S.left = S.coins = 0; S.ch = Math.max(1, S.ch); S.res = null;
-    karts = COL.map((c, i) => { const s = i ? i - 1 : 3, id = N - 3 - s * 3, o = [-7, 7, 0, 7][s], q = side(P[id], o); return { i, c, x: q[0], y: q[1], a: P[id][2], v: 0, idx: id, prog: id - N, done: 0, boost: 0, spin: -9, lane: o, max: 60 + r * 6 + i * 4 + A.rnd(-2, 2) }; }); me = karts[0];
+    karts = COL.map((c, i) => { const s = i ? i - 1 : 3, id = N - 3 - s * 3, o = [-7, 7, 0, 7][s], q = side(P[id], o); return { i, c, x: q[0], y: q[1], a: P[id][2], v: 0, idx: id, prog: id - N, done: 0, boost: 0, spin: -9, lane: o, max: 56 + r * 6 + i * 4 + A.rnd(-2, 2) }; }); me = karts[0];
     coins = []; for (let j = 0; j < 4; j++) { const b = Math.floor(N * (j + .5) / 4) + A.ri(-3, 3), o = [-7, 0, 7][A.ri(0, 2)]; for (let m = 0; m < 3; m++) { const q = side(P[(b + m * 2) % N], o); coins.push({ x: q[0], y: q[1], on: 1 }); } }
     haz = []; const spot = (t, o) => { for (let n = 0; n < 30; n++) { const i = A.ri(10, N - 16), q = side(P[i], o); if (T.pads.every(p => Math.abs(p - i) > 5) && haz.every(h => (h.x - q[0]) ** 2 + (h.y - q[1]) ** 2 > 400)) { haz.push({ x: q[0], y: q[1], t, on: 1 }); return; } } };
     for (let j = 0; j < (r ? r + 1 : 0); j++) spot('oil', j % 2 ? 7 : -7); for (let j = 0; j < (r - 1) * 2; j++) spot('cone', [0, -9, 9][j % 3]); }
@@ -58,11 +58,11 @@ init(A) {
   function track(k) { let bd = 1e9, bi = k.idx; for (let j = 0; j < 14; j++) { const i = (k.idx + j) % N, d = (P[i][0] - k.x) ** 2 + (P[i][1] - k.y) ** 2; if (d < bd) { bd = d; bi = i; } } k.prog += (bi - k.idx + N) % N; k.idx = bi; return Math.sqrt(bd); }
   function turbo() { if (S.ph !== 'race' || me.done) return; if (S.ch < 1 || me.boost > 0) { A.beep(140, .06, 'square', .03); return; } S.ch--; me.boost = 1.5; S.shake = .15; [330, 494, 740].forEach((f, i) => setTimeout(() => A.beep(f, .1, 'sawtooth', .04), i * 60)); F.spark(me.x, me.y, ['#ffd23c', '#ff9a2a', '#ffffff'], 12, 70); }
   function finish() { const o = order(), pl = o.indexOf(me) + 1, bonus = [500, 300, 150, 0][pl - 1] + (pl < 4 ? Math.max(0, Math.round((45 - S.time) * 10)) : 0); o.forEach((k, i) => { S.pts[k.i] += CUP[i]; k.gain = CUP[i]; });
-    S.out = pl === 4; S.res = { pl, bonus }; A.add(bonus); S.ph = 'board'; S.t = 0; A.info('RACE ' + (S.race + 1) + ': ' + ORD[pl - 1]); A.beep(pl === 1 ? 990 : pl < 4 ? 660 : 200, .3, 'triangle', .05); }
+    if (pl === 4) S.lasts++; S.out = pl === 4 && S.lasts > 1; S.res = { pl, bonus }; A.add(bonus); S.ph = 'board'; S.t = 0; A.info('RACE ' + (S.race + 1) + ': ' + ORD[pl - 1]); A.beep(pl === 1 ? 990 : pl < 4 ? 660 : 200, .3, 'triangle', .05); }
   function next() { if (S.ph !== 'board' || S.t < 1) return; if (!S.out && S.race < TR.length - 1) { setup(S.race + 1); return; }
     const rk = cupOrder().indexOf(me); S.ph = 'end'; if (!S.out) A.add([1000, 400, 150, 0][rk]); A.over(!S.out && rk === 0); }
   setup(0);
-  return { st: S,
+  return {
     key(k) { if (k === 'a' || k === 'up') { if (S.ph === 'board') { if (k === 'a') next(); } else turbo(); } },
     tap() { next(); },
     update(dt) { S.clock += dt; S.shake -= dt; S.msgT -= dt; S.bump -= dt;
@@ -72,12 +72,12 @@ init(A) {
       for (const k of karts) { const off = track(k), p = P[k.idx]; let mx;
         if (!k.done && k.prog >= N * LAPS) { k.done = S.time; if (k === me) { S.fin = 1.4; say('FINISH!', 2); F.spark(k.x, k.y, COL, 24, 90); } }
         k.boost -= dt; k.spin -= dt;
-        if (k === me) { const pt = A.ptrs[0], st = (A.keys.right || (pt && pt.x >= 120) ? 1 : 0) - (A.keys.left || (pt && pt.x < 120) ? 1 : 0); if (k.spin <= 0) k.a += st * 3.2 * dt * Math.min(1, k.v / 40 + .3);
-          mx = k.done ? 0 : k.boost > 0 ? (off > RW ? 85 : 145) : off > RW ? 42 : A.keys.down ? 20 : 96;
+        if (k === me) { const pt = A.ptrs[0], st = (A.keys.right || (pt && pt.x >= 120) ? 1 : 0) - (A.keys.left || (pt && pt.x < 120) ? 1 : 0); if (k.spin <= 0) k.a += st * 3.8 * dt * Math.min(1, k.v / 40 + .3);
+          mx = k.done ? 0 : k.boost > 0 ? (off > RW ? 85 : 145) : off > RW ? 48 : A.keys.down ? 20 : 96;
           if (!k.done) { S.wrong = Math.cos(k.a - p[2]) < -.3 ? S.wrong + dt : 0; if (off > RW && k.v > 25 && Math.random() < dt * 20) F.puff(k.x, k.y, S.race === 2 ? '#ffffff' : S.race === 3 ? '#8a7ab8' : S.race ? '#f0d48a' : '#7a5230'); if (k.boost > 0 && Math.random() < dt * 40) F.puff(k.x - Math.cos(k.a) * 6, k.y - Math.sin(k.a) * 6, Math.random() < .5 ? '#ff9a2a' : '#ffd23c'); }
           const lap = Math.min(LAPS - 1, Math.floor(Math.max(0, k.prog) / N)); if (lap > S.lap && !k.done) { S.lap = lap; coins.forEach(c => c.on = 1); A.beep(660, .12, 'triangle', .05); say(lap === LAPS - 1 ? 'FINAL LAP!' : 'LAP ' + (lap + 1)); } }
         else { const q = side(P[(k.idx + 5) % N], k.lane), want = Math.atan2(q[1] - k.y, q[0] - k.x), gap = k.prog - me.prog; if (k.spin <= 0) k.a += Math.max(-3 * dt, Math.min(3 * dt, nd(want - k.a)));
-          mx = k.done ? 0 : k.max * (Math.abs(nd(want - k.a)) > .5 ? .75 : 1) * (k.boost > 0 ? 1.35 : 1) * (gap > 22 ? .86 : gap > 6 ? .94 : gap < -30 ? 1.06 : 1); }
+          mx = k.done ? 0 : k.max * (Math.abs(nd(want - k.a)) > .5 ? .75 : 1) * (k.boost > 0 ? 1.35 : 1) * (gap > 45 ? .72 : gap > 22 ? .82 : gap > 6 ? .94 : gap < -30 ? 1.06 : 1); }
         if (k.spin > 0) mx = Math.min(mx, 28);
         k.v += (mx - k.v) * Math.min(1, dt * (mx < k.v ? 3 : k.boost > 0 ? 5 : 1.4));
         k.x = Math.max(4, Math.min(236, k.x + Math.cos(k.a) * k.v * dt)); k.y = Math.max(4, Math.min(236, k.y + Math.sin(k.a) * k.v * dt));
@@ -88,8 +88,8 @@ init(A) {
           else if (k.spin < -1.2) { k.spin = .6; k.boost = 0; if (k === me) { S.shake = .25; A.beep(220, .3, 'sawtooth', .04); say('OIL!', .8); } } } }
       for (const c of coins) if (c.on && (c.x - me.x) ** 2 + (c.y - me.y) ** 2 < 70 && !me.done) { c.on = 0; A.add(10); S.got++; A.beep(1175, .07, 'square', .04); F.spark(c.x, c.y, ['#ffd23c', '#fff6c8'], 6, 50);
         if (++S.coins >= 3) { S.coins = 0; if (S.ch < 3) { S.ch++; say('TURBO READY!', 1); A.beep(1568, .12, 'square', .04); } else A.add(20); } }
-      /* karts push each other apart; the one behind loses a little speed */
-      for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) { const a = karts[i], b = karts[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1; if (d < 9) { const u = (9 - d) / 2 / d; a.x -= dx * u; a.y -= dy * u; b.x += dx * u; b.y += dy * u; (a.prog < b.prog ? a : b).v *= 1 - Math.min(1, dt * 2); if (!i && S.bump <= 0 && !a.done) { S.bump = .4; S.shake = .12; A.beep(110, .08, 'square', .04); F.spark((a.x + b.x) / 2, (a.y + b.y) / 2, ['#ffffff', '#ffd23c'], 4, 40); } } }
+      /* karts push each other apart sideways (so the one behind can get past) and the one behind loses a little speed */
+      for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) { const a = karts[i], b = karts[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1; if (d < 9) { const h = P[a.idx][2], nx = -Math.sin(h), ny = Math.cos(h), u = (dx * nx + dy * ny < 0 ? -1 : 1) * (9 - d) / 2; a.x -= nx * u; a.y -= ny * u; b.x += nx * u; b.y += ny * u; (a.prog < b.prog ? a : b).v *= 1 - Math.min(1, dt); if (!i && S.bump <= 0 && !a.done) { S.bump = .4; S.shake = .12; A.beep(110, .08, 'square', .04); F.spark((a.x + b.x) / 2, (a.y + b.y) / 2, ['#ffffff', '#ffd23c'], 4, 40); } } }
       /* everyone else is home: a short clock stops the race from dragging on */
       if (!me.done && karts.every(k => k === me || k.done)) { if (!S.left) { S.left = 12; say('HURRY UP!', 1.5); } S.left -= dt; if (S.left <= 0) { me.done = 1e4; S.fin = .01; } }
       if (S.fin > 0) { S.fin -= dt; if (S.fin <= 0) finish(); return; }
@@ -110,7 +110,7 @@ init(A) {
       A.text(g, fin && !S.out ? 'CUP FINAL TABLE' : T.name + ' RESULT', 120, 51, '#ffffff', 1, 'center');
       tx('YOU FINISHED ' + ORD[S.res.pl - 1], 120, 68, '#ffd23c', 2, 'center'); A.text(g, 'RACE BONUS +' + S.res.bonus, 120, 84, '#5fe3d6', 1, 'center');
       co.forEach((k, i) => { const y = 98 + i * 17; if (k === me) K.box(g, 34, y - 5, 172, 15, '#4a3f6a'); A.text(g, ORD[i], 40, y, '#ffffff', 1); K.put(g, K.kart(k.c), 66, y + 2, { rot: Math.PI / 2 }); A.text(g, NAME[k.i], 80, y, k.i ? k.c : '#ffffff', 1); A.text(g, '+' + k.gain, 150, y, '#8a8a98', 1, 'right'); A.text(g, S.pts[k.i] + ' PTS', 198, y, '#ffffff', 1, 'right'); });
-      A.text(g, S.out ? 'LAST PLACE: OUT OF THE CUP' : fin ? (rk ? ORD[rk] + ' IN THE CUP' : 'CUP CHAMPION!') : 'NEXT: ' + TR[S.race + 1].name, 120, 168, S.out ? '#ff8a9a' : '#ffd23c', 1, 'center');
+      A.text(g, S.out ? 'LAST AGAIN: OUT OF THE CUP' : S.res.pl === 4 && !fin ? 'LAST! ONCE MORE AND YOU ARE OUT' : fin ? (rk ? ORD[rk] + ' IN THE CUP' : 'CUP CHAMPION!') : 'NEXT: ' + TR[S.race + 1].name, 120, 168, S.out || (S.res.pl === 4 && !fin) ? '#ff8a9a' : '#ffd23c', 1, 'center');
       if (S.ph === 'board' && S.t > 1 && (S.clock * 3 & 1)) A.text(g, 'PRESS SPACE OR TAP', 120, 181, '#ffffff', 1, 'center'); }
   };
 } });

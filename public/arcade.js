@@ -1,7 +1,7 @@
 /* Falcon Arcade — platform shell + tiny pixel game engine */
 (function () {
 'use strict';
-const VER = 'v0.3';
+const VER = 'v0.4';
 const $ = id => document.getElementById(id);
 const IC = {
   shooters: 'M5 1h2v3h1v2h2v2h1v2H8v1H4v-1H1V8h1V6h2V4h1z',
@@ -13,17 +13,17 @@ const IC = {
 };
 const CATS = [
   { id: 'shooters', name: 'Shooters', blurb: 'Dodge, aim and blast', bg: '#2a1430', fg: '#ff9a2a', games: [
-    ['star-falcon', 'Star Falcon', 'Vertical space shooter, 8 stages'], ['asteroid-storm', 'Asteroid Storm', 'Spin, thrust and blast the rocks'], ['tank-patrol', 'Tank Patrol', 'Top-down tank battles'], ['sky-defender', 'Sky Defender', 'Guard the base from enemy waves'], ['bubble-blaster', 'Bubble Blaster', 'Aim and pop colour bubbles']] },
+    ['star-falcon', 'Star Falcon', 'Space shooter: 8 stages, 8 bosses'], ['asteroid-storm', 'Asteroid Storm', 'Spin, thrust and blast the rocks'], ['tank-patrol', 'Tank Patrol', 'Top-down tank battles'], ['sky-defender', 'Sky Defender', 'Guard the base from enemy waves'], ['bubble-blaster', 'Bubble Blaster', 'Aim and pop colour bubbles']] },
   { id: 'platformers', name: 'Platformers', blurb: 'Run, jump and explore', bg: '#12382a', fg: '#7fe08a', games: [
-    ['jungle-run', 'Jungle Run', 'Run, jump and collect fruit'], ['castle-climb', 'Castle Climb', 'Climb the tower, dodge the traps'], ['robo-jump', 'Robo Jump', 'Endless jumper, ever higher'], ['cave-explorer', 'Cave Explorer', 'Find keys and open doors'], ['ninja-dash', 'Ninja Dash', 'Fast one-button runner']] },
+    ['jungle-run', 'Jungle Run', 'Run, jump and collect fruit'], ['castle-climb', 'Castle Climb', 'Climb the tower, dodge the traps'], ['robo-jump', 'Robo Jump', 'Bounce up to the Star Station'], ['cave-explorer', 'Cave Explorer', 'Find keys and open doors'], ['ninja-dash', 'Ninja Dash', 'Rooftop runner: jump and slide']] },
   { id: 'puzzle', name: 'Puzzle', blurb: 'Think first, then move', bg: '#2a1f5a', fg: '#c8a8ff', games: [
     ['block-drop', 'Block Drop', 'Falling blocks, clear the lines'], ['gem-match', 'Gem Match', 'Swap and match three'], ['number-slide', 'Number Slide', 'Merge tiles up to 2048'], ['pipe-flow', 'Pipe Flow', 'Rotate pipes, connect the water'], ['memory-cards', 'Memory Cards', 'Find the matching pairs']] },
   { id: 'racing', name: 'Racing', blurb: 'Fast reflexes win', bg: '#4a2410', fg: '#ffd23c', games: [
     ['turbo-road', 'Turbo Road', 'Highway dodging, top-down'], ['moto-hills', 'Moto Hills', 'Balance over bumpy hills'], ['boat-rush', 'Boat Rush', 'River racing with boosts'], ['kart-cup', 'Kart Cup', 'Circuit races against the computer'], ['space-slalom', 'Space Slalom', 'Fly through the gates']] },
   { id: 'sports', name: 'Sports', blurb: 'Quick matches, 1 or 2 players', bg: '#0f3a5a', fg: '#8fd3ff', games: [
-    ['penalty-kick', 'Penalty Kick', 'Beat the goalkeeper'], ['hoop-shot', 'Hoop Shot', 'Basketball free throws'], ['mini-golf', 'Mini Golf', '9 holes with obstacles'], ['table-tennis', 'Table Tennis', 'First to 11 points'], ['air-hockey', 'Air Hockey', 'Two players on one screen']] },
+    ['penalty-kick', 'Penalty Kick', 'Beat the goalkeeper'], ['hoop-shot', 'Hoop Shot', 'Basketball free throws'], ['mini-golf', 'Mini Golf', '9 holes with obstacles'], ['table-tennis', 'Table Tennis', 'First to 11 points'], ['air-hockey', 'Air Hockey', 'Win the Falcon Cup, 1 or 2 players']] },
   { id: 'classics', name: 'Classics', blurb: 'The games parents grew up with', bg: '#3a1420', fg: '#ff8a9a', games: [
-    ['snake-trail', 'Snake Trail', 'Eat, grow, do not bite your tail'], ['brick-breaker', 'Brick Breaker', 'Paddle, ball and a wall of bricks'], ['maze-chase', 'Maze Chase', 'Collect the dots, avoid the slimes'], ['frog-crossing', 'Frog Crossing', 'Cross the road and the river'], ['paddle-duel', 'Paddle Duel', 'Two-player paddle match']] }
+    ['snake-trail', 'Snake Trail', 'Eat, grow, do not bite your tail'], ['brick-breaker', 'Brick Breaker', 'Paddle, ball and a wall of bricks'], ['maze-chase', 'Maze Chase', 'Collect the dots, avoid the slimes'], ['frog-crossing', 'Frog Crossing', 'Cross the road and the river'], ['paddle-duel', 'Paddle Duel', 'Beat 5 rivals, a friend can join in']] }
 ];
 const GAMES = {}, DEFS = {};
 CATS.forEach(c => { c.games = c.games.map(g => (GAMES[g[0]] = { id: g[0], name: g[1], desc: g[2], cat: c })); });
@@ -80,8 +80,8 @@ function rowsHtml() { const row = (id, t, blurb, ids) => ids.length ? `<section 
 function title(t) { document.title = t ? t + ' — Falcon Arcade' : 'Falcon Arcade — pixel games for kids'; }
 function home() { stop(); cur = 'home'; title(); document.body.classList.remove('ingame'); const n = Object.keys(GAMES).filter(isReady).length;
   view.innerHTML = `<section class="hero" id="hero"><div class="hl"><span class="tag">FEATURED</span><h1>STAR FALCON</h1>
-    <p>Fly the white-and-orange fighter through 8 pixel worlds, buy upgrades in the hangar and beat a boss at the end of every stage.</p>
-    <div class="facts"><span>8 stages</span><span>6 upgrades</span><span>Easy · Normal · Hard</span><span>Phone + PC</span></div>
+    <p>Fly the white-and-orange fighter through 8 pixel worlds, buy upgrades and wing drones in the hangar and beat a giant boss at the end of every stage. Then take on all 8 bosses in Boss Rush!</p>
+    <div class="facts"><span>8 stages</span><span>8 bosses</span><span>7 upgrades</span><span>Boss Rush</span><span>Easy · Normal · Hard</span><span>Phone + PC</span></div>
     <a class="big" href="games/star-falcon/index.html">PLAY NOW</a></div>
     <div class="hr"><img alt="Star Falcon, Earth Orbit stage" src="thumbs/sf-orbit.png"><img alt="Star Falcon, Blue Archipelago stage" src="thumbs/star-falcon.png"><img alt="Star Falcon, Lava World stage" src="thumbs/sf-lava.png"></div></section>`
     + rowsHtml()

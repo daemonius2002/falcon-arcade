@@ -1,6 +1,6 @@
 /* Hoop Shot — slingshot basketball: 8 rounds, each one adds a twist (heights, sliding hoop, wind, bumper). A basket gives the ball back, a miss costs one. */
 Arcade.game('hoop-shot', { w: 240, h: 320, pad: 'dpad', a: 'THROW',
-help: 'Pull back and let go, like a slingshot: touch or click, drag down away from the hoop, then release. The dots show where the ball will fly. With keys: left / right aim, up / down power, Space throws. Score 3 baskets to clear a round. There are 8 rounds: the hoop starts to slide, the wind blows and a bouncy bumper gets in the way. A basket gives your ball back, a miss costs one. Grab the star for an extra ball. Baskets in a row, clean swishes and bank shots score more.',
+help: 'Pull back and let go, like a slingshot: touch or click, drag down away from the hoop, then release. The dots show where the ball will fly. With keys: left / right aim, up / down power, Space throws. Score 3 baskets to clear a round (4 in the final). There are 8 rounds: the hoop starts to slide, the wind blows and a bouncy bumper gets in the way. A basket gives your ball back, a miss costs one (misses in the warm-up round are free). Grab the star for an extra ball. Baskets in a row, clean swishes and bank shots score more.',
 init(A) {
   const K = Art, F = K.fx(), BX = 120, BY = 266, G = 520, FLOOR = 277, MAXB = 9, OL = '#140e1c';
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -19,7 +19,7 @@ init(A) {
     star = r ? { x: A.rnd(40, 200), y: A.rnd(140, 172) } : null; intro = r ? 1.7 : 1.1; info(); }
   function throwIt() { if (ball || wait > 0 || intro > 0 || end) return; ball = { x: BX, y: BY, vx: vx0, vy: vy0, sc: 0, rim: 0, bank: 0, dead: 0, up: 0, rel: 1, t: 0 }; A.beep(400, .06); }
   function done(ok) { ball = null; wait = .3;
-    if (!ok) { streak = 0; left--; say(left > 0 ? 'MISS' : 'OUT OF BALLS', '#ff8a9a'); A.beep(160, .12, 'sawtooth'); if (left <= 0) { end = 1; win = 0; wait = 1.2; } info(); return; }
+    if (!ok) { streak = 0; if (r) left--; say(!r ? 'TRY AGAIN!' : left > 0 ? 'MISS' : 'OUT OF BALLS', '#ff8a9a'); /* misses in the warm-up round are free */ A.beep(160, .12, 'sawtooth'); if (left <= 0) { end = 1; win = 0; wait = 1.2; } info(); return; }
     if (!pend) { if (!cfg.mv) place(); return; }
     pend = 0; A.add(150 * (r + 1)); for (let i = 0; i < 3; i++) F.spark(40 + i * 80, 70, ['#ffd23c', '#5fe3d6', '#ff8a9a', '#ffffff'], 16, 120);
     [660, 880, 1100].forEach((f, i) => setTimeout(() => A.beep(f, .12, 'triangle'), i * 110));
@@ -60,7 +60,7 @@ init(A) {
       if (cfg.bump) { bmx += bmv * dt; if (bmx < 30) { bmx = 30; bmv = Math.abs(bmv); } if (bmx > 210) { bmx = 210; bmv = -Math.abs(bmv); } }
       if (wait > 0) { wait -= dt; if (wait <= 0 && end) { A.over(!!win); return; } }
       if (!ball) { if (end) { dr = null; return; }
-        if (A.ptr.down && !dr) dr = { x: A.ptr.x, y: A.ptr.y };
+        if (A.ptr.down && !dr) { const p = A.ptrs[0]; dr = p ? { x: p.x0, y: p.y0 } : { x: A.ptr.x, y: A.ptr.y }; } /* anchor where the finger went down, not where it is a frame later */
         if (dr) { const dx = (dr.x - A.ptr.x) * 4.2, dy = (dr.y - A.ptr.y) * 4.2; if (Math.hypot(dx, dy) > 60) { vx0 = clamp(dx, -220, 220); vy0 = clamp(dy, -520, -200); }
           if (!A.ptr.down) { const far = Math.hypot(dr.x - A.ptr.x, dr.y - A.ptr.y) > 14; dr = null; if (far) throwIt(); } }
         return; }

@@ -33,7 +33,7 @@ init(A) {
     if (i % 2) { K.ell(g, 0, -9, 24, 3, d); K.ell(g, 2, 5, 25, 2.5, d); K.ell(g, 0, 15, 20, 2, d); } else { K.ell(g, -9, -6, 6, 5, d); K.ell(g, 8, 8, 8, 6, d); K.ell(g, 10, -13, 3, 2.5, d); } }, { ol: 0, L: 9 });
 
   /* ---- helpers ---- */
-  const info = () => A.info('SECTOR ' + lvl + ' · ' + res.length + '/' + total);
+  const info = () => A.info('SECTOR ' + lvl); /* gate pips on the canvas show progress; longer text wraps on phones */
   const say = (a, b, c, d) => { bTxt = a; bSub = b || ''; bNote = c || ''; banner = d || 2.4; };
   const pop = (px, py, s, c) => pops.push({ x: clamp(px, 26, W - 26), y: py, s, c: c || '#fff6c8', l: .9 });
   const tune = (fs, type) => fs.forEach((f, i) => setTimeout(() => A.beep(f, .14, type || 'triangle', .05), i * 110));
@@ -67,7 +67,7 @@ init(A) {
     const perfect = off < q.w * .16; q.st = 1; res.push(1); streak++; const n = 50 + Math.min(10, streak) * 10 + (perfect ? 50 : 0); A.add(n);
     pop(x, SY - 26, perfect ? 'PERFECT +' + n : '+' + n, perfect ? '#ffd23c' : '#8ff08a'); A.beep(560 + Math.min(10, streak) * 45, .07, 'triangle'); if (perfect) A.beep(1320, .09, 'square', .025);
     for (const s of [-1, 1]) F.spark(q.x + s * q.w / 2, SY, perfect ? ['#ffd23c', '#fff6c8'] : ['#3fd45a', '#8ff08a'], perfect ? 9 : 5, 70);
-    if (streak && streak % 5 === 0) { pop(120, 120, 'STREAK ' + streak + '!', '#5fe3d6'); A.beep(990, .12, 'triangle', .04); } info(); }
+    if (streak && streak % 5 === 0) { pop(120, 160, 'STREAK ' + streak + '!', '#5fe3d6'); A.beep(990, .12, 'triangle', .04); } info(); }
   function clear() { let n = 200 * lvl, note = 'SECTOR ' + lvl + ' CLEAR +' + n; F.spark(x, SY, ['#ffd23c', '#5fe3d6', '#ff8a9a', '#ffffff'], 26, 140);
     if (clean) { n += 300; note = 'FLAWLESS! +' + n + (lives < 5 ? ' AND +1 LIFE' : ''); if (lives < 5) lives++; } A.add(n);
     if (lvl === LAST) { A.add(lives * 500); won = 2.8; say('GALAXY CUP!', 'ALL 8 SECTORS CLEAR', 'LIFE BONUS +' + lives * 500, 3); tune([523, 659, 784, 1047, 1319]); info(); return; }
@@ -81,7 +81,7 @@ init(A) {
       else sp += clamp(cruise - sp, -90 * dt, 90 * dt);
       /* steering: keys / pad win over the pointer; the pointer sets a spot to fly to */
       const kd = alive ? (A.keys.right ? 1 : 0) - (A.keys.left ? 1 : 0) : 0;
-      if (kd) tx = null; else if (A.ptr.down || A.ptr.moved) tx = clamp(A.ptr.x, 10, W - 10);
+      if (kd) tx = null; else if (A.ptr.down) tx = clamp(A.ptr.x, 10, W - 10);
       const want = !alive ? 0 : kd ? kd * LAT : tx != null ? clamp((tx - x) * 10, -250, 250) : 0;
       vx += clamp(want - vx, -1700 * dt, 1700 * dt); x += vx * dt; if (x < 10 || x > W - 10) { x = clamp(x, 10, W - 10); vx = 0; }
       const dy = sp * dt; dist += dy; secD += dy;

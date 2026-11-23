@@ -1,6 +1,6 @@
 {
   "name": "falcon-arcade",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Falcon Arcade - pixel games platform (static site + tiny Node server)",
   "scripts": { "start": "node server.js" },

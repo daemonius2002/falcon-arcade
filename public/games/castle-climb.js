@@ -11,10 +11,11 @@ init(A) {
   const ember = f => K.spr(ID + 'ember' + f, 12, 14, g => { const w = f ? 4.4 : 5; K.part(g, [0, -7, w, 0, w - 1, 5, 0, 7, -w + 1, 5, -w, 0, f ? -2 : 2, -3], K.lin(g, 0, -7, 0, 7, '#c8f4ff', '#3cb4ff', '#2a4ad8')); K.ell(g, 0, 3, 2.4, 3, '#ffffff'); }, { ol: [20, 30, 110] });
   const crown = () => K.spr(ID + 'crown', 18, 14, g => { K.part(g, [-8, 6, -8, -4, -4, 1, 0, -6, 4, 1, 8, -4, 8, 6], K.lin(g, -8, 0, 8, 0, '#fff6c8', '#ffd23c', '#c8801e')); K.box(g, -8, 3, 16, 2, '#c8801e'); K.box(g, -1, 0, 2, 2, '#e8231e'); K.box(g, -6, 1, 2, 2, '#5fe3d6'); K.box(g, 4, 1, 2, 2, '#5fe3d6'); });
   const lock = () => K.spr(ID + 'lock', 8, 9, g => { K.rr(g, -3, -4.5, 6, 6, 3, '#aab4c2'); K.box(g, -1, -3, 2, 3, '#4a3418'); K.box(g, -4, -1, 8, 5.5, '#ffd23c'); K.box(g, -4, -1, 8, 1, '#fff6c8'); K.box(g, -1, 1, 2, 2, '#4a3418'); });
+  const life = () => K.spr(ID + 'life', 8, 8, g => { K.box(g, -3, -3, 2, 1, '#e8231e'); K.box(g, 0, -3, 2, 1, '#e8231e'); K.box(g, -4, -2, 7, 2, '#e8231e'); K.box(g, -3, 0, 5, 1, '#e8231e'); K.box(g, -2, 1, 3, 1, '#e8231e'); K.box(g, -1, 2, 1, 1, '#e8231e'); K.box(g, -3, -2, 1, 1, '#ffb0a0'); });
   const S = K.fx();
   let lad, fire, bats, spikes, coins, keyO, heartO, door, pl, pops = [];
   let lives = 3, lvl = 1, top = 0, hasKey = 0, bonus = 0, dead = 0, intro = 0, clr = 0, sh = 0, tm = 0, jbuf = 0, nag = 0;
-  const info = () => A.info('LIVES ' + lives + '  TOWER ' + lvl);
+  const info = () => A.info('TOWER ' + lvl + '/' + LAST); /* lives are hearts in the canvas HUD */
   const pop = (s, x, y, c) => pops.push({ s, x: Math.max(18, Math.min(162, x)), y, l: .9, c: c || '#ffd23c' });
   const tune = (n, type) => n.forEach((f, i) => setTimeout(() => A.beep(f, .12, type || 'triangle'), i * 90));
   const ends = f => [f ? lad[f - 1] : 20, f < 5 ? lad[f] : door]; /* where you arrive on a floor and where you leave it */
@@ -33,14 +34,14 @@ init(A) {
     for (let i = 0; i < Math.min(lvl - 2, 4); i++) bats.push({ f: bf[i], /* never the top floor: it sits right under the HUD */ x: A.rnd(20, 160), d: i % 2 ? 1 : -1, sp: 44 + lvl * 4, ph: A.rnd(0, 6) });
     for (let f = lvl > 4 ? 0 : 1; f < 6; f++) { const n = f ? 1 + (lvl > 2 && f % 2 ? 1 : 0) : 1;
       for (let k = 0; k < n; k++) { const blue = lvl > 4 && k === 0 && f % 2 === lvl % 2; let x = A.rnd(30, 150); if (Math.abs(x - ends(f)[0]) < 34) x = ends(f)[0] < 90 ? 150 : 30;
-        fire.push({ f, x, d: Math.random() < .5 ? -1 : 1, sp: Math.min(84, (A.rnd(34, 42) + lvl * 4) * (blue ? 1.3 : 1)), blue }); } }
+        fire.push({ f, x, d: Math.random() < .5 ? -1 : 1, sp: Math.min(84, (A.rnd(34, 42) + lvl * 3) * (blue ? 1.3 : 1)), blue }); } }
     for (let f = 0; f < 6; f++) for (let k = f ? 2 : 1; k--;) { const x = spot(f, 12, coins); if (x > 0) { coins.push({ f, x }); used.push({ f, x }); } }
     if (!hasKey) { const f = A.ri(1, 4), e = ends(f), lo = Math.min(e[0], e[1]), hi = Math.max(e[0], e[1]); keyO = { f, x: lo > 180 - hi ? 12 : 168 }; } /* off the direct route */
     if (lvl % 2 && lvl > 1 && lives < 5) { const f = A.ri(2, 5), x = spot(f, 14, used.concat(spikes)); if (x > 0) heartO = { f, x }; }
     place(0); intro = 1.6; info(); }
   function hurt() { if (pl.inv > 0) return false;
     const feet = FY(pl.f) - pl.jh - pl.cp * 44, head = feet - (pl.st ? 10 : 22), hit = (x, y, rx, ry) => Math.abs(x - pl.x) < rx && feet > y - ry && head < y + ry;
-    return fire.some(b => hit(b.x, FY(b.f) - 6, 8, 3)) || bats.some(b => hit(b.x, FY(b.f) - 34, 9, 4)) || spikes.some(s => hit(s.x, FY(s.f) - 3, 7, 2)); }
+    return fire.some(b => hit(b.x, FY(b.f) - 5, 6, 2)) /* a forgiving flame box: even a standing jump over a slow fireball has a fair timing window */ || bats.some(b => hit(b.x, FY(b.f) - 34, 9, 4)) || spikes.some(s => hit(s.x, FY(s.f) - 3, 7, 2)); }
   function die() { lives--; dead = 1.1; sh = .3; info(); A.beep(150, .35, 'sawtooth'); A.beep(90, .5, 'square');
     const y = FY(pl.f) - pl.jh - pl.cp * 44 - 12; S.boom(pl.x, y); S.spark(pl.x, y, ['#ffd23c', '#ff8a1e', '#ffffff'], 14, 90); }
   function jump() { pl.jv = 125; pl.jh = .01; jbuf = 0; pl.over = fire.filter(b => b.f === pl.f).map(b => ({ b, s: Math.sign(b.x - pl.x) })); A.beep(520, .05); A.beep(700, .05, 'triangle'); }
@@ -95,8 +96,9 @@ init(A) {
         K.put(g, K.guy(KO, pl.st ? 1 + Math.floor(pl.cp * 8) % 2 : pl.jh > 0 ? 3 : mv ? 1 + Math.floor(pl.x / 6) % 2 : 0), pl.x, fy - 14, pl.dir < 0 ? { flip: 1 } : null); }
       S.draw(g); for (const p of pops) { A.text(g, p.s, p.x + 1, p.y + 1, '#140e1c', 1, 'center'); A.text(g, p.s, p.x, p.y, p.c, 1, 'center'); }
       g.restore();
-      /* HUD: time bonus and key */
+      /* HUD: time bonus, lives and key */
       K.box(g, 0, 0, 180, 9, '#140e1c'); A.text(g, 'BONUS ' + Math.round(bonus / 10) * 10, 3, 2, bonus > 100 ? '#5fe3d6' : '#ff8a9a');
+      for (let i = 0; i < lives; i++) K.put(g, life(), 68 + i * 9, 4);
       if (lvl > 1 && lvl < LAST) { A.text(g, hasKey ? 'KEY' : 'NO KEY', 163, 2, hasKey ? '#ffd23c' : '#8a94a4', 1, 'right'); if (hasKey) K.put(g, K.key(), 171, 4); }
       if (intro > 0) { K.box(g, 0, 112, 180, 40, '#140e1c'); K.box(g, 0, 113, 180, 1, STONE[th]); K.box(g, 0, 150, 180, 1, STONE[th]);
         A.text(g, 'TOWER ' + lvl, 90, 120, '#ffd23c', 3, 'center'); A.text(g, HINT[th], 90, 141, '#ffffff', 1, 'center'); } }

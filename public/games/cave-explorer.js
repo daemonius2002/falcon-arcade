@@ -6,7 +6,7 @@ init(A) {
   const DIRS = [{ x: 1, y: 0, n: 'right' }, { x: -1, y: 0, n: 'left' }, { x: 0, y: 1, n: 'down' }, { x: 0, y: -1, n: 'up' }];
   const D = { right: DIRS[0], left: DIRS[1], down: DIRS[2], up: DIRS[3] };
   const THEME = ['#6a4e38', '#4a5670', '#4e6a3c', '#62487a'];
-  const NEWS = ['FIND THE KEY AND THE DOOR', 'YOUR LAMP BURNS DOWN: GRAB OIL', 'WATCH OUT FOR SPIKES', 'THE RED BAT HUNTS YOU', 'TWO SLIMES ON PATROL', 'MORE RUBIES, MORE BATS', 'NEARLY THERE', 'THE LAST CAVE!'];
+  const NEWS = ['FIND THE KEY AND THE DOOR', 'YOUR LAMP BURNS DOWN: GRAB OIL', 'WATCH OUT FOR SPIKES', 'THE RED BAT HUNTS YOU', 'TWO SLIMES ON PATROL', 'MORE RUBIES TO FIND', 'NEARLY THERE', 'THE LAST CAVE!'];
   const SH = []; for (let i = 0; i <= 8; i++) SH.push('rgba(4,2,10,' + (i * .087).toFixed(3) + ')');
   const GOLD = ['#ffd23c', '#fff6c8', '#ff9a2a'], bg = K.mkc(240, 240), bq = bg.getContext('2d'), fx = K.fx();
   const ds = new Int16Array(N * N), qu = new Int16Array(N * N);
@@ -53,10 +53,10 @@ init(A) {
     const ends = c => DIRS.filter(d => open(c.x + d.x, c.y + d.y)).length === 1 ? D0(c) : -1;
     items = [Object.assign(best(ends), { t: 'chest' })];
     const put = (t, n, min) => { for (let i = 0; i < n; i++) items.push(Object.assign(take(min), { t })); };
-    put('gem', 6, 2); if (lvl > 1) { put('ruby', lvl > 5 ? 2 : 1, 6); put('oil', 2, 4); } if (lvl > 2 && lvl % 2) put('heart', 1, 6);
+    put('gem', 6, 2); if (lvl > 1) { put('ruby', lvl > 5 ? 2 : 1, 6); put('oil', 2, 4); } if (lvl > 2) put('heart', 1, 6);
     gemsAll = gemsN = items.filter(i => i.t === 'gem' || i.t === 'ruby').length;
     foes = []; const foe = (t, n, sp) => { for (let i = 0; i < n; i++) foes.push(Object.assign(take(8), { t, sp: sp * A.rnd(.88, 1.1), dx: 0, dy: 0, p: 0 })); };
-    foe('bat', 1 + (lvl >> 1), 2 + lvl * .15); if (lvl > 1) foe('slime', lvl > 4 ? 2 : 1, 1.5); if (lvl > 3) foe('hunt', lvl >= LAST ? 2 : 1, 2.3 + lvl * .1);
+    foe('bat', 1 + (lvl - 1 >> 1), 2 + lvl * .15); if (lvl > 1) foe('slime', lvl > 4 ? 2 : 1, 1.5); if (lvl > 3) foe('hunt', 1, 2.3 + lvl * .1); /* at most 7 foes: a dark maze with more is too much for young players */
     spikes = []; const sp = []; for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) if ((x + y) % 2 && open(x, y) && ds[y * N + x] > 3) sp.push({ x, y, o: A.rnd(0, 2.6) });
     for (let i = Math.min(6, lvl - 2); i > 0 && sp.length; i--) spikes.push(sp.splice(A.ri(0, sp.length - 1), 1)[0]);
     pl = { x: start.x, y: start.y, dx: 0, dy: 0, p: 0, d: null, f: 1 }; want = null; hold = false; oil = 1; low = false; bonus = 300; pops = []; grace = 1.4;
@@ -75,8 +75,8 @@ init(A) {
     for (const s of spikes) for (const x of [-4, 0, 4]) K.box(bq, s.x * T + 7 + x, s.y * T + 11, 2, 2, '#0e0a14'); }
 
   /* ---------- rules ---------- */
-  function hurt() { if (inv > 0 || dead > 0) return; lives--; inv = 2; sh = .3; A.beep(150, .35, 'sawtooth'); fx.spark((pl.x + pl.dx * pl.p) * T + 8, (pl.y + pl.dy * pl.p) * T + 8, ['#ff4060', '#ffffff'], 12, 70);
-    if (lives <= 0) { dead = 1.1; say('OH NO!', 'THE CAVE WINS THIS TIME', 3); } }
+  function hurt() { if (inv > 0 || dead > 0) return false; lives--; inv = 2; sh = .3; A.beep(150, .35, 'sawtooth'); fx.spark((pl.x + pl.dx * pl.p) * T + 8, (pl.y + pl.dy * pl.p) * T + 8, ['#ff4060', '#ffffff'], 12, 70);
+    if (lives <= 0) { dead = 1.1; say('OH NO!', 'THE CAVE WINS THIS TIME', 3); } return true; }
   function clear() { const b = Math.ceil(bonus / 10) * 10, all = gemsN === 0, win = lvl >= LAST; A.add(200 + b + (all ? 100 : 0) + (win ? 500 + lives * 200 : 0)); tr = win ? 2.6 : 1.9;
     say(win ? 'YOU ESCAPED!' : 'CAVE CLEAR!', 'SPEED BONUS +' + b + (all ? '   ALL GEMS +100' : '') + (win ? '   LIVES +' + lives * 200 : ''), 9);
     fx.spark(door.x * T + 8, door.y * T + 8, GOLD, 24, 90); [660, 880, 1100].forEach((f, i) => A.beep(f, .12 + i * .08, 'triangle')); }
@@ -95,7 +95,7 @@ init(A) {
     else if (!((pl.dx || pl.dy) && open(pl.x + pl.dx, pl.y + pl.dy) && (!hold || A.keys[pl.d.n]))) pl.dx = pl.dy = 0; }
   function steerF(e) { const ok = DIRS.filter(d => open(e.x + d.x, e.y + d.y)), fwd = ok.filter(d => !(d.x === -e.dx && d.y === -e.dy)), here = ds[e.y * N + e.x]; let d;
     if (e.t === 'slime' && (e.dx || e.dy) && open(e.x + e.dx, e.y + e.dy)) return;
-    if (e.t === 'hunt' && here < 7 && Math.random() < .8) d = ok.find(o => ds[(e.y + o.y) * N + e.x + o.x] < here);
+    if (e.t === 'hunt' && here < 6 && !(e.calm > 0) && Math.random() < .75) d = ok.find(o => ds[(e.y + o.y) * N + e.x + o.x] < here);
     if (!d) { const o = fwd.length && (e.dx || e.dy) ? fwd : ok; d = o[A.ri(0, o.length - 1)]; }
     if (d) { e.dx = d.x; e.dy = d.y; } }
   function move(e, sp, dt, steer, arr) { if (!e.dx && !e.dy) { steer(e); if (!e.dx && !e.dy) return; } e.p += sp * dt;
@@ -120,7 +120,8 @@ init(A) {
       bonus = Math.max(0, bonus - dt * 4);
       if (lvl > 1) { oil = Math.max(0, oil - dt / (50 - lvl * 3)); if (oil < .25 && !low) { low = true; say('LAMP IS LOW', 'FIND AN OIL FLASK', 1.3); A.beep(300, .2, 'square'); } }
       const px = pl.x + pl.dx * pl.p, py = pl.y + pl.dy * pl.p;
-      for (const b of foes) { if (grace <= 0) move(b, b.sp, dt, steerF); const dx = b.x + b.dx * b.p - px, dy = b.y + b.dy * b.p - py; if (dx * dx + dy * dy < .4) hurt(); }
+      for (const b of foes) { if (grace <= 0) move(b, b.sp, dt, steerF); const dx = b.x + b.dx * b.p - px, dy = b.y + b.dy * b.p - py; if (b.calm > 0) b.calm -= dt;
+        if (dx * dx + dy * dy < .4 && hurt()) { b.calm = 3; if (b.dx || b.dy) { b.x += b.dx; b.y += b.dy; b.p = 1 - b.p; b.dx = -b.dx; b.dy = -b.dy; } } } /* the foe that hit you turns back and a hunter stops chasing for a while, so it cannot pin you in a dead end */
       for (const s of spikes) { const ph = (tm + s.o) % 2.6, was = s.up; s.up = ph > 2 ? 2 : ph > 1.5 ? 1 : 0;
         if (s.up === 2 && was !== 2 && seen[s.y][s.x] && Math.hypot(s.x - px, s.y - py) < lamp()) A.beep(1500, .03, 'square', .02);
         if (s.up === 2 && Math.abs(s.x - px) + Math.abs(s.y - py) < .55) hurt(); } },

@@ -14,7 +14,7 @@ init(A) {
   let cam = 0, top = BASE, done = 0, lastT = 0, lastGap = 0, nextJet = 70, nextHeart = 140, best = 0, zone = 0, lives = 3;
   let inv = 0, jet = 0, shk = 0, t = 0, won = 0, streak = 0, streakT = 0, banner = 'CLIMB TO THE STAR STATION!', banT = 3, landT = 0, jetS = 0;
   let plats = [{ x: 0, y: BASE, w: W, t: 6, vx: 0 }], items = [], bugs = [], pops = [], notes = [];
-  const stars = []; for (let i = 0; i < 46; i++) stars.push([i * 67 % 178, i * 131 % 300, i % 5 ? 1 : 2, i * 37 % 7]);
+  const stars = []; for (let i = 0; i < 46; i++) stars.push([A.ri(0, 177), A.ri(0, 299), i % 5 ? 1 : 2, A.ri(0, 6)]);
   const tune = (fs, gap) => fs.forEach((f, i) => notes.push({ at: t + i * (gap || .09), f }));
   const pop = (x, y, s, c) => pops.push({ x, y, s, c: c || '#ffffff', l: .8 });
   const wrapDx = (a, b) => ((a - b) % W + W * 1.5) % W - W / 2;
@@ -81,12 +81,12 @@ init(A) {
       if (pl.dead || Math.abs(wrapDx(pl.x, i.x)) > 11 || Math.abs(pl.y - 9 - i.y) > 13) continue; i.gone = 1;
       if (i.k === 0) { streak = Math.min(8, streak + 1); streakT = 1.6; const v = 5 * Math.min(4, streak); A.add(v); pop(i.x, i.y - 6, '+' + v, '#ffd23c'); A.beep(820 + streak * 70, .07, 'triangle', .05); fx.spark(i.x, i.y, ['#ffd23c', '#fff6c8'], 6, 50); }
       else if (i.k === 1) { jet = 1.1; inv = Math.max(inv, 1.8); pop(i.x, i.y - 6, 'ROCKET!', '#8ae06a'); tune([392, 523, 659, 784], .06); }
-      else { lives = Math.min(3, lives + 1); pop(i.x, i.y - 6, '+1 HEART', '#ff8a9a'); tune([659, 880], .09); }
+      else if (lives < 3) { lives++; pop(i.x, i.y - 6, '+1 HEART', '#ff8a9a'); tune([659, 880], .09); } else { A.add(25); pop(i.x, i.y - 6, '+25', '#ff8a9a'); A.beep(880, .08, 'triangle', .05); }
     }
     cam = Math.max(ST - 200, Math.min(cam, pl.y - 135)); gen();
     const h = Math.min(GOAL, Math.floor((BASE - pl.y) / 10));
     if (h > best && !pl.dead) { A.add(h - best); best = h; const z = Math.min(4, best / ZM | 0); if (z > zone) { zone = z; A.add(50); banner = 'ZONE ' + (z + 1) + ': ' + ZN[z].n + '  +50'; banT = 2.4; tune([523, 659, 784], .1); } }
-    A.info('ZONE ' + (zone + 1) + ' · ' + best + 'M');
+    A.info(best + ' M');
     if (pl.y > cam + H + 14) { if (pl.dead) A.over(); else hurt(1); }
   }
 
@@ -141,7 +141,7 @@ init(A) {
     for (const q of pops) A.text(g, q.s, Math.max(4 + q.s.length * 2, Math.min(W - 4 - q.s.length * 2, q.x)), q.y, q.c, 1, 'center');
     g.restore();
     /* HUD: hearts, climb meter, zone banner */
-    for (let i = 0; i < 3; i++) K.put(g, K.heart(), 9 + i * 13, 9, i < lives ? undefined : { a: .25 });
+    for (let i = 0; i < 3; i++) K.put(g, K.heart(), 9 + i * 13, 9, i < lives ? undefined : { a: .25 }); A.text(g, 'ZONE ' + (zone + 1), 4, 19, '#12101c', 1); A.text(g, 'ZONE ' + (zone + 1), 3, 18, '#ffffff', 1);
     K.box(g, 171, 22, 4, 236, 'rgba(8,4,16,.45)'); for (let i = 1; i < 5; i++) K.box(g, 170, 258 - i * 47, 6, 1, '#d6dbea');
     const my = 258 - Math.round(best / GOAL * 236); K.box(g, 172, my, 2, 258 - my, '#5fe3d6'); K.put(g, K.star('#ffd23c'), 172, 14); K.box(g, 169, my - 1, 8, 3, '#ff9a2a'); K.box(g, 169, my - 1, 8, 1, '#ffd23c');
     if (banT > 0 && (banT > .5 || (banT * 12 | 0) % 2)) { K.box(g, 0, 52, W, 15, 'rgba(8,4,16,.6)'); A.text(g, banner, 90, 57, '#ffd23c', 1, 'center'); }

@@ -37,7 +37,7 @@ init(A) {
 
   /* ---- helpers ---- */
   const left = () => queue.length + en.length + (warn ? 1 : 0);
-  const info = () => A.info('MISSION ' + lvl + '  LIVES ' + lives + '  TANKS ' + left());
+  let infoS = ''; const info = () => { const s = 'MISSION\u00a0' + lvl + ' \u2665\u00a0' + lives; if (s !== infoS) A.info(infoS = s); };   /* short, so the score bar never wraps; tanks left are shown on the field */
   const pop = (x, y, s, c) => pops.push({ x: Math.max(30, Math.min(W - 30, x)), y, s, c: c || '#fff6c8', l: 1.1 });
   const say = (a, b, d) => { bTxt = a; bSub = b; banner = d || 2.2; };
   const tune = (fs, type) => fs.forEach((f, i) => setTimeout(() => A.beep(f, .12, type || 'triangle', .05), i * 90));
@@ -75,10 +75,10 @@ init(A) {
     say('MISSION ' + n, NEW[n] || cnt + ' ENEMY TANKS'); info(); }
 
   /* ---- events ---- */
-  function hurt(base) { lives--; perfect = false; power = Math.max(0, power - 1); shake = .5; A.beep(120, .4, 'sawtooth'); const x = base ? 120 : pl.x, y = base ? 312 : pl.y; F.boom(x, y, 1); F.spark(x, y, ['#ffd23c', '#ff8a1e', '#f2f5f8'], 16, 110);
+  function hurt(base) { if (pl.dead) return; lives--; perfect = false; power = Math.max(0, power - 1); shake = .5; A.beep(120, .4, 'sawtooth'); const x = base ? 120 : pl.x, y = base ? 312 : pl.y; F.boom(x, y, 1); F.spark(x, y, ['#ffd23c', '#ff8a1e', '#f2f5f8'], 16, 110);
     if (lives <= 0) { pl.dead = 1; dying = 1.3; info(); return; }
-    if (base) { hq = 3; wall(); inv = 2; pop(120, 286, 'BASE REBUILT', '#8af09a'); } else place(); info(); }
-  function grab(i, x, y) { A.add(50); tune([660, 880, 1100]); pop(x, y - 10, i || power < 1 ? PN[i] : 'STEEL BUSTER', K.lite(PC[i], .5));
+    if (base) { hq = 3; wall(); inv = 2; pop(120, 276, 'BASE REBUILT', '#8af09a'); } else place(); info(); }
+  function grab(i, x, y) { A.add(50); tune([660, 880, 1100]); pop(x, y - 10, i === 2 && lives >= 5 ? '+500' : i || power < 1 ? PN[i] : 'STEEL BUSTER', K.lite(PC[i], .5));
     if (i === 0) power = Math.min(2, power + 1); else if (i === 1) shield = 9; else if (i === 2) { if (lives < 5) lives++; else A.add(450); } else if (i === 3) freeze = 6; else { hq = 3; wall(); } info(); }
   function kill(e) { e.dead = 1; kills++; const k = KD[e.k]; A.add(k[3]); pop(e.x, e.y - 8, k[3]); shake = Math.max(shake, .18); A.beep(160, .15, 'sawtooth'); F.boom(e.x, e.y, 1); F.spark(e.x, e.y, [k[0], '#ffd23c', '#59627a'], 10, 90);
     if (kills % 4 === 2) { const c = [1, 3]; if (power < 2) c.push(0, 0); if (hq < 3 || WALL.some(([x, y]) => !m[y][x])) c.push(4, 4); if (lives < 4) c.push(2); picks.push({ x: e.x, y: e.y, i: c[A.ri(0, c.length - 1)], l: 12 }); } }
@@ -140,8 +140,10 @@ init(A) {
       for (let y = 2; y < GH - 2; y++) for (let x = 0; x < GW; x++) if (m[y][x] === BUSH) K.put(g, sBush(), x * T + 8, y * T + 8);
       F.draw(g); for (const p of pops) A.text(g, p.s, p.x, p.y, p.l > .25 || Math.floor(p.l * 30) % 2 ? p.c : '#8a7a5a', 1, 'center'); g.restore();
       /* status chips and banner */
-      let hx = 3; const chip = (s, c, v) => { K.box(g, hx, 311, s.length * 4 + 5, 8, 'rgba(10,8,20,.7)'); A.text(g, s, hx + 3, 312, c); if (v < 1) K.box(g, hx + 1, 318, Math.round((s.length * 4 + 3) * v), 1, c); hx += s.length * 4 + 8; };
-      if (power > 0) chip(power > 1 ? 'STEEL BUSTER' : 'RAPID FIRE', '#ffd23c', 1); if (shield > 0) chip('SHIELD', '#8ad0ff', shield / 9); if (freeze > 0) chip('FREEZE', '#bff4ff', freeze / 6);
+      /* chips fade while your tank drives under them */
+      let hx = 3; const chip = (s, c, v) => { const w = s.length * 4 + 5; g.globalAlpha = !pl.dead && pl.y > 298 && pl.x + 9 > hx && pl.x - 9 < hx + w ? .35 : 1;
+        K.box(g, hx, 311, w, 8, 'rgba(10,8,20,.7)'); A.text(g, s, hx + 3, 312, c); if (v < 1) K.box(g, hx + 1, 318, Math.round((s.length * 4 + 3) * v), 1, c); hx += w + 3; g.globalAlpha = 1; };
+      if (power > 0) chip(power > 1 ? 'STEEL BUSTER' : 'RAPID FIRE', '#ffd23c', 1); if (shield > 0) chip('SHIELD', '#8ad0ff', shield / 9); if (freeze > 0) chip('FREEZE', '#bff4ff', freeze / 6); hx = W - 32 - String(left()).length * 4; chip('TANKS ' + left(), '#f2f5f8', 1);
       if (banner > 0) { K.box(g, 0, 130, W, 52, 'rgba(10,8,20,.78)'); K.box(g, 0, 130, W, 1, '#ffd23c'); K.box(g, 0, 181, W, 1, '#ffd23c'); A.text(g, bTxt, 120, 139, '#ffd23c', 3, 'center'); A.text(g, bSub, 120, 163, '#f2f5f8', 2, 'center'); } }
   };
 } });

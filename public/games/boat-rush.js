@@ -80,8 +80,9 @@ init(A) {
   function steer(dt) {
     const d = (A.keys.right ? 1 : 0) - (A.keys.left ? 1 : 0);
     if (d) ptrMode = false; else if (A.ptr.down || A.ptr.moved) { ptrMode = true; tx = A.ptr.x; }
-    const want = d ? d * 175 : ptrMode ? Math.max(-190, Math.min(190, (tx - x) * 10)) : 0;
-    vx += Math.max(-1100 * dt, Math.min(1100 * dt, want - vx)); x += vx * dt;
+    const want = d ? d * 150 : ptrMode ? Math.max(-190, Math.min(190, (tx - x) * 10)) : 0;
+    const acc = want * vx > 0 ? 1600 : 2800; /* letting go or turning back bites harder, so the boat does not slide into the bank */
+    vx += Math.max(-acc * dt, Math.min(acc * dt, want - vx)); x += vx * dt;
   }
 
   return {
@@ -91,7 +92,7 @@ init(A) {
       for (const p of pops) { p.l -= dt; p.y -= 22 * dt; } pops = pops.filter(p => p.l > 0);
       if (dead > 0) { sp *= 1 - 3 * dt; s += sp * dt; if ((dead -= dt) <= 0) A.over(); return; }
       const cruise = ST[stage].v; sp += Math.max(-80 * dt, Math.min(34 * dt, cruise - sp));
-      const v = sp * (boost > 0 ? 1.45 : 1); s += v * dt;
+      const v = sp * (boost > 0 ? 1.3 : 1); s += v * dt;
       const wb = s + AHEAD, c = cx(wb), h = hw(wb);
       if (won) { x += (c - x) * 2 * dt; vx = 0; if ((won -= dt) <= 0) A.over(true); F.puff(x - 4, BY + 14, '#e6f5ff', 50); F.puff(x + 4, BY + 14, '#b8e6ff', 50); return; }
       steer(dt); spawn();

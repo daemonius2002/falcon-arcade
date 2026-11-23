@@ -50,7 +50,7 @@ init(A) {
     K.box(g, 0, 0, 240, OY, '#14301c'); K.box(g, 0, OY - 2, 240, 2, '#0c1c10'); K.box(g, 0, 0, 240, 1, '#2f6a3a'); }
   function setLevel(n) { lvl = n; rocks.fill(0); for (const [x, y, w, h] of LV[n].r) for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) rocks[j * N + i] = 1;
     eaten = 0; quota = 5 + n; sp = .18 - .007 * n; food = extra = hole = null; respawn(); food = spot(3); paint(); mode = 'ready'; mt = 1.5; banner = 'GARDEN ' + (n + 1); info(); }
-  const info = () => A.info('GARDEN ' + (lvl + 1) + ' OF ' + LV.length + ' · LENGTH ' + s.length);
+  const info = () => A.info('GARDEN ' + (lvl + 1)); /* the HUD strip carries the rest; longer text wraps on phones */
 
   function hurt() { lives--; shake = .4; F.boom(cx(s[0]), cy(s[0]), true); A.beep(140, .3, 'sawtooth', .06);
     if (!lives) { mode = 'done'; A.over(); return; } mode = 'hurt'; mt = 1; }
@@ -68,7 +68,7 @@ init(A) {
       if (!grace) { grace = 1; still = true; A.beep(330, .05, 'square', .03); return; } return hurt(); }
     grace = 0; still = false; tp = tail; s.unshift(h);
     if (same(hole, h)) { mode = 'warp'; mt = 0; A.beep(523, .1, 'triangle', .05); return; }
-    if (same(food, h)) eat(h); else { s.pop(); if (same(extra, h)) grab(h); } info(); }
+    if (same(food, h)) eat(h); else { s.pop(); if (same(extra, h)) grab(h); } }
   function bugStep() { for (const b of bugs) { b.px = b.x; b.py = b.y; const n = { x: b.x + b.dx, y: b.y + b.dy };
       if (!open(n.x, n.y) || s.some((o, i) => i && same(o, n)) || bugs.some(o => o !== b && same(o, n)) || same(food, n) || same(extra, n) || same(hole, n)) { b.dx = -b.dx; b.dy = -b.dy; continue; }
       b.x = n.x; b.y = n.y; if (same(s[0], n)) { hurt(); return; } } }
