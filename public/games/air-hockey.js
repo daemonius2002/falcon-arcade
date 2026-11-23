@@ -3,11 +3,11 @@ help: 'Falcon Cup: beat 5 rivals, each match is first to 3 goals. Push the puck 
 init(A) {
   const K = Art, F = K.fx(), PR = 7, BR = 9, L = 5, R = 235, T = 5, B = 315, GA = 74, GB = 166, RED = '#e8231e';
   const OPP = [ /* atk/def = mallet speeds, trk = how closely it shadows the puck, pre = how well shots are read, err = aiming wobble, reach = how far forward it attacks */
-    { n: 'PIP', c: '#3fb95a', atk: 90, def: 45, trk: .3, pre: 0, err: 9, reach: 135, tip: 'FIRST TO 3 GOALS' },
-    { n: 'DASH', c: '#3f6ad0', atk: 120, def: 62, trk: .4, pre: .15, err: 7, reach: 166, star: 1, tip: 'HIT A STAR FOR A POWER-UP' },
-    { n: 'BOING', c: '#b06ae0', atk: 145, def: 80, trk: .5, pre: .3, err: 5, reach: 166, star: 1, bump: 1, tip: 'WATCH THE BUMPERS' },
-    { n: 'FROSTY', c: '#2fc4ba', atk: 162, def: 92, trk: .55, pre: .4, err: 4, reach: 166, star: 1, bump: 2, tip: 'THE BUMPER SLIDES' },
-    { n: 'ZED', c: '#ff8a1e', atk: 186, def: 112, trk: .6, pre: .55, err: 3, reach: 166, star: 1, bump: 3, max: 470, tip: 'THE FINAL - GOOD LUCK' }];
+    { n: 'PIP', c: '#3fb95a', atk: 80, def: 40, trk: .3, pre: 0, err: 10, reach: 135, tip: 'FIRST TO 3 GOALS' },
+    { n: 'DASH', c: '#3f6ad0', atk: 108, def: 54, trk: .38, pre: .12, err: 8, reach: 166, star: 1, tip: 'HIT A STAR FOR A POWER-UP' },
+    { n: 'BOING', c: '#b06ae0', atk: 124, def: 64, trk: .42, pre: .2, err: 7, reach: 166, star: 1, bump: 1, tip: 'WATCH THE BUMPERS' },
+    { n: 'FROSTY', c: '#2fc4ba', atk: 138, def: 74, trk: .48, pre: .28, err: 6, reach: 166, star: 1, bump: 2, tip: 'THE BUMPER SLIDES' },
+    { n: 'ZED', c: '#ff8a1e', atk: 158, def: 88, trk: .55, pre: .4, err: 4, reach: 166, star: 1, bump: 3, max: 470, tip: 'THE FINAL - GOOD LUCK' }];
   const P2 = { n: 'PLAYER 2', c: '#3f6ad0', star: 1, tip: 'FIRST TO 7 GOALS' };
   const mal = y => ({ x: 120, y, ox: 120, oy: y, cx: 120, cy: y, vx: 0, vy: 0, r: 12, big: 0, ice: 0 });
   const m1 = mal(270), m2 = mal(50), p = { x: 120, y: 200, vx: 0, vy: 0 }, trail = [], pops = [], bumps = [], Q = [], MS = [m1, m2], still = { vx: 0, vy: 0 };
@@ -62,7 +62,7 @@ init(A) {
       if ((t2 || r.w || r.a || r.s || r.d) && !human) { human = true; match(0, true); }
       if (!t1 && A.ptr.moved && !ps.length) t1 = A.ptr;
       if (t1) { m1.tx = t1.x; m1.ty = t1.y - off; m1.fol = true; } else if (k.left || k.right || k.up || k.down) m1.fol = false;
-      if (m1.fol) mv(m1, m1.tx, m1.ty, 1100, dt, false); else mv(m1, m1.x + ((k.right ? 1 : 0) - (k.left ? 1 : 0)) * 40, m1.y + ((k.down ? 1 : 0) - (k.up ? 1 : 0)) * 40, 260, dt, false);
+      if (m1.fol) mv(m1, m1.tx, m1.ty, 1100, dt, false); else mv(m1, m1.x + ((k.right ? 1 : 0) - (k.left ? 1 : 0)) * 40, m1.y + ((k.down ? 1 : 0) - (k.up ? 1 : 0)) * 40, 300, dt, false);
       slide(dt);
       if (!human) ai(dt); else if (t2) mv(m2, t2.x, t2.y + off, 1100, dt, true); else mv(m2, m2.x + ((r.d ? 1 : 0) - (r.a ? 1 : 0)) * 40, m2.y + ((r.s ? 1 : 0) - (r.w ? 1 : 0)) * 40, 260, dt, true);
       if (inter > 0) { inter -= dt; if (inter <= 0) match(rd + 1); return; }

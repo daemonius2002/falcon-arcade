@@ -37,6 +37,7 @@ const db = { name: 'Player 1', fav: {}, scores: {}, mute: 0, plays: {}, recent: 
 try { Object.assign(db, JSON.parse(localStorage.getItem('falcon-arcade')) || {}); } catch (e) {}
 for (const k of ['fav', 'scores', 'plays', 'time']) if (!db[k] || typeof db[k] !== 'object') db[k] = {};
 if (!Array.isArray(db.recent)) db.recent = [];
+for (const k in db.scores) if (!Array.isArray(db.scores[k])) delete db.scores[k]; /* a damaged entry would break A.over */
 const save = () => { try { localStorage.setItem('falcon-arcade', JSON.stringify(db)); } catch (e) {} };
 const bestOf = id => ((db.scores[id] || [])[0] || { s: 0 }).s;
 function played(id) { db.plays[id] = (db.plays[id] || 0) + 1; db.recent = [id].concat(db.recent.filter(x => x !== id)).slice(0, 8); save(); }
@@ -70,7 +71,7 @@ function stop() { cancelAnimationFrame(raf); killers.forEach(f => f()); killers 
 const favBtn = (g, fv) => `<button type="button" class="fvb${fv ? ' on' : ''}" data-fav="${g.id}" aria-pressed="${fv}" aria-label="Favourite ${g.name}" title="Favourite">${fv ? '★' : '☆'}</button>`;
 function card(g) { const ok = isReady(g.id), c = g.cat, href = g.id === 'star-falcon' ? 'games/star-falcon/index.html' : '#' + g.id, b = bestOf(g.id);
   const th = ok ? `<img class="th" alt="" loading="lazy" src="thumbs/${g.id}.png">` : `<div class="th ph" style="background:${c.bg}">${icon(c, 72)}</div>`;
-  const body = `${th}<b>${g.name}</b><span>${g.desc}</span><div class="cf"><i class="bd${ok ? ' ok' : ''}">${ok ? 'PLAY' : 'COMING SOON'}</i>${b ? `<em class="bs">BEST ${b}</em>` : ''}</div>`, s = esc((g.name + ' ' + g.desc + ' ' + c.name).toLowerCase());
+  const body = `${th}<b>${g.name}</b><span>${g.desc}</span><div class="cf"><i class="bd${ok ? ' ok' : ''}">${ok ? 'PLAY' : 'COMING SOON'}</i>${b ? `<em class="bs">BEST ${esc(b)}</em>` : ''}</div>`, s = esc((g.name + ' ' + g.desc + ' ' + c.name).toLowerCase());
   return `<div class="cw" data-s="${s}">` + (ok ? `<a class="card" href="${href}" data-id="${g.id}" data-s="${s}">${body}</a>` + favBtn(g, !!db.fav[g.id]) : `<div class="card off" data-s="${s}">${body}</div>`) + '</div>'; }
 /* personal rows on the home page: recently played + favourites */
 function rowsHtml() { const row = (id, t, blurb, ids) => ids.length ? `<section class="cat row" id="${id}"><div class="ch"><h2>${t}</h2><span>${blurb}</span></div><div class="grid">${ids.map(i => card(GAMES[i])).join('')}</div></section>` : '';
@@ -91,13 +92,13 @@ function filter() { if (cur !== 'home') return; const q = $('q').value.trim().to
   view.querySelectorAll('.cat').forEach(s => { let n = 0; s.querySelectorAll('.cw').forEach(c => { const m = !q || c.dataset.s.includes(q); c.hidden = !m; if (m) n++; });
     if (q && s.classList.contains('row')) n = 0; /* personal rows would only duplicate search results */ s.hidden = !n; if (n) any = true; });
   $('hero').hidden = !!q; $('empty').hidden = any; }
-function scoresHtml(id, hi) { const l = db.scores[id] || []; return l.length ? `<table><thead><tr><th>#</th><th>Player</th><th class="r">Score</th></tr></thead><tbody>${l.map((s, i) => `<tr${i + 1 === hi ? ' class="me"' : ''}><td>${i + 1}</td><td>${esc(s.n)}</td><td class="r">${s.s}</td></tr>`).join('')}</tbody></table>` : '<p class="sm">No scores yet. Be the first!</p>'; }
+function scoresHtml(id, hi) { const l = db.scores[id] || []; return l.length ? `<table><thead><tr><th>#</th><th>Player</th><th class="r">Score</th></tr></thead><tbody>${l.map((s, i) => `<tr${i + 1 === hi ? ' class="me"' : ''}><td>${i + 1}</td><td>${esc(s.n)}</td><td class="r">${esc(s.s)}</td></tr>`).join('')}</tbody></table>` : '<p class="sm">No scores yet. Be the first!</p>'; }
 const fmtTime = s => s < 60 ? Math.round(s) + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : (s / 3600).toFixed(1) + ' h';
 function statsHtml() { const ids = Object.keys(GAMES), pl = id => db.plays[id] || 0, sum = o => ids.reduce((a, id) => a + (+o[id] || 0), 0);
   const tried = ids.filter(id => pl(id) || bestOf(id)).sort((a, b) => pl(b) - pl(a) || bestOf(b) - bestOf(a)), rounds = sum(db.plays);
   const rank = rounds < 5 ? 'ROOKIE' : rounds < 25 ? 'PILOT' : rounds < 80 ? 'ACE' : 'LEGEND', tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
   return `<p class="rank">RANK: <b>${rank}</b></p><div class="tiles">${tile(tried.length + '/' + ids.length, 'games tried')}${tile(rounds, 'rounds played')}${tile(fmtTime(sum(db.time)), 'time played')}${tile(ids.filter(id => db.fav[id]).length, 'favourites')}</div>`
-    + (tried.length ? `<table><thead><tr><th>Game</th><th class="r">Rounds</th><th class="r">Best</th></tr></thead><tbody>${tried.slice(0, 8).map(id => `<tr><td>${id === 'star-falcon' ? GAMES[id].name : `<a href="#${id}">${GAMES[id].name}</a>`}</td><td class="r n">${pl(id)}</td><td class="r">${bestOf(id) || '-'}</td></tr>`).join('')}</tbody></table>` : '<p class="sm">Play a game and your stats will show up here.</p>'); }
+    + (tried.length ? `<table><thead><tr><th>Game</th><th class="r">Rounds</th><th class="r">Best</th></tr></thead><tbody>${tried.slice(0, 8).map(id => `<tr><td>${id === 'star-falcon' ? GAMES[id].name : `<a href="#${id}">${GAMES[id].name}</a>`}</td><td class="r n">${pl(id)}</td><td class="r">${esc(bestOf(id) || '-')}</td></tr>`).join('')}</tbody></table>` : '<p class="sm">Play a game and your stats will show up here.</p>'); }
 function gameView(id) { stop(); cur = 'game'; document.body.classList.add('ingame'); const def = DEFS[id], G = GAMES[id], c = G.cat; title(G.name);
   view.innerHTML = `<div class="gv"><section class="stage" id="stage"><div class="stin" style="--r:${(def.w / def.h).toFixed(4)}">
       <div class="gbar"><span>SCORE <b id="gS">0</b></span><span id="gI"></span><span>BEST <b id="gB">0</b></span></div>
@@ -120,7 +121,7 @@ function run(id, def) { const cv = $('gc'), g = cv.getContext('2d'), W = def.w, 
   const ui = () => { const b = $('bPa'); b.disabled = st !== 'play'; b.textContent = paused ? 'Resume' : 'Pause'; b.classList.toggle('on', paused); };
   function setPause(v) { if (st !== 'play' || paused === v) return; paused = v; ui();
     if (v) { flush(); ov.innerHTML = '<h2>PAUSED</h2><p>Tap RESUME or press P.</p><button class="big" id="gRs" type="button">RESUME</button><button id="gGo" type="button">Restart</button>'; ov.hidden = false; try { $('gRs').focus({ preventScroll: true }); } catch (e) {} }
-    else { ov.hidden = true; last = 0; } }
+    else ov.hidden = true; }
   const CONF = ['#ffd23c', '#ff9a2a', '#5fe3d6', '#ff8a9a'], confetti = () => '<div class="conf" aria-hidden="true">' + CONF.concat(CONF, CONF, CONF).map((c, i) => `<i style="left:${3 + i * 6}%;background:${c};animation-delay:${(i * 7 % 10) / 10}s"></i>`).join('') + '</div>';
   const A = { w: W, h: H, keys: {}, raw: {}, ptr: { x: W / 2, y: H / 2, down: false, moved: false }, ptrs: [], score: 0,
     rnd: (a, b) => a + Math.random() * (b - a), ri: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
@@ -137,7 +138,7 @@ function run(id, def) { const cv = $('gc'), g = cv.getContext('2d'), W = def.w, 
   on(ov, 'click', e => { if (e.target.closest('#gGo')) begin(); else if (e.target.closest('#gRs')) setPause(false); });
   on($('bPa'), 'click', () => setPause(!paused));
   const KM = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', ' ': 'a', Enter: 'a' }; if (!def.arrowsOnly) Object.assign(KM, { a: 'left', d: 'right', w: 'up', s: 'down' });
-  on(window, 'keydown', e => { if (e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey) return; const r = e.key.length === 1 ? e.key.toLowerCase() : e.key, k = KM[r]; A.raw[r] = true;
+  on(window, 'keydown', e => { if (e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey || (e.target.closest && e.target.closest('dialog'))) return; /* typing in the player dialog never drives the game */ const r = e.key.length === 1 ? e.key.toLowerCase() : e.key, k = KM[r]; A.raw[r] = true;
     if (k && paused && st === 'play') { if (k !== 'a' || e.target.tagName !== 'BUTTON') e.preventDefault(); return; } /* paused: nothing reaches the game, Space/Enter still press the focused button */
     if (k) { e.preventDefault(); if (st !== 'play') { if (k === 'a' && !e.repeat && performance.now() - overAt > 700) begin(); return; } if (!e.repeat) { A.keys[k] = true; if (inst.key) inst.key(k); } }
     else if (r === 'p' && st === 'play') setPause(!paused); });
@@ -195,6 +196,8 @@ window.Arcade = { game(id, def) { DEFS[id] = def; },
       view.querySelectorAll('a.card').forEach(c => { if (c === t || !c.offsetParent) return; const q = c.getBoundingClientRect(), dx = q.left + q.width / 2 - cx, dy = q.top + q.height / 2 - cy, along = dx * d[0] + dy * d[1], across = Math.abs(dx * d[1]) + Math.abs(dy * d[0]);
         if (along > 8 && along + across * 3 < bd) { bd = along + across * 3; bst = c; } });
       if (bst) { e.preventDefault(); bst.focus(); bst.scrollIntoView({ block: 'nearest' }); } });
+    /* skip link: move focus to the content without touching the hash (a hash change would leave the game view) */
+    const sk = document.querySelector('.skip'); if (sk) sk.addEventListener('click', e => { e.preventDefault(); view.focus(); view.scrollIntoView(); });
     setTimeout(appIcons, 0);
     addEventListener('hashchange', route); route(); } };
 })();

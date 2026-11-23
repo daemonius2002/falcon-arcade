@@ -1,6 +1,6 @@
 /* Asteroid Storm v0.4 — waves of splitting rocks, crystal power-ups, scout bots, mega rocks and score combos */
 Arcade.game('asteroid-storm', { w: 240, h: 320, pad: 'dpad', a: 'FIRE',
-help: 'Clear every rock to finish a wave. Left and right turn the ship, up fires the engine, down brakes, Space or FIRE shoots (hold it to keep firing). You can also hold a finger or the mouse on the screen: the ship turns that way, shoots and flies there. Big rocks split into smaller ones and the screen wraps around. Blue crystal rocks drop power-ups: a shield bubble, a triple shot or an extra life. From wave 3 scout bots fly by and shoot slow pink bolts, and every 5th wave brings a tough mega rock. Hit rocks quickly in a row to build a combo of up to x5 points. A new ship is awarded every 10000 points.',
+help: 'Clear every rock to finish a wave. Left and right turn the ship, up fires the engine, down brakes, Space or FIRE shoots (hold it to keep firing). You can also hold a finger or the mouse on the screen: the ship turns that way and shoots, and if you hold it on empty space the ship flies there. Big rocks split into smaller ones and the screen wraps around. Blue crystal rocks drop power-ups: a shield bubble, a triple shot or an extra life. From wave 3 scout bots fly by and shoot slow pink bolts, and every 5th wave brings a tough mega rock. Hit rocks quickly in a row to build a combo of up to x5 points. A new ship is awarded every 10000 points.',
 init(A) {
   const K = Art, W = 240, H = 320, TAU = Math.PI * 2, ID = 'asteroid-storm-', F = K.fx();
   const RAD = [0, 6, 11, 18, 27], PTS = [0, 50, 20, 10, 100], CRY = '#3f9ae0', MID = { x: W / 2, y: H / 2 };
@@ -64,6 +64,7 @@ init(A) {
   reset(); wave();
 
   return {
+    key(k) { if (k === 'a') fire(); }, /* a quick tap on FIRE or Space still shoots */
     update(dt) { t += dt; cd -= dt; inv -= dt; triple -= dt; shake -= dt; banner -= dt; thrT -= dt;
       if ((chainT -= dt) <= 0 && chain) { chain = 0; mult = 1; }
       /* ---- ship ---- */
@@ -72,15 +73,17 @@ init(A) {
           if (rocks.some(r => d2(r, MID) < (r.r + 34) ** 2) && (waitT += dt) < 2) dead = .01; /* wait for a clear spot */
           else { dead = waitT = 0; reset(); A.beep(520, .15, 'triangle'); } } }
       else {
-        let turn = (A.keys.right ? 1 : 0) - (A.keys.left ? 1 : 0), shoot = A.keys.a; thrust = A.keys.up ? 1 : 0;
+        let turn = (A.keys.right ? 1 : 0) - (A.keys.left ? 1 : 0), shoot = A.keys.a, brake = A.keys.down; thrust = A.keys.up ? 1 : 0;
         const p = A.ptrs[0];
-        if (p) { ptT += dt; const dx = p.x - s.x, dy = p.y - s.y; let da = Math.atan2(dy, dx) - s.a; da = Math.atan2(Math.sin(da), Math.cos(da));
+        /* finger / mouse held: aim and shoot that way; held on open space (not on a rock) the ship also flies there and slows down near the spot */
+        if (p) { ptT += dt; const dx = p.x - s.x, dy = p.y - s.y, far = dx * dx + dy * dy > 50 * 50; let da = Math.atan2(dy, dx) - s.a; da = Math.atan2(Math.sin(da), Math.cos(da));
           if (Math.abs(da) > .06) turn = Math.sign(da) * Math.min(1.7, Math.abs(da) * 6 + .3);
-          if (Math.abs(da) < .3) { shoot = 1; if (ptT > .3 && dx * dx + dy * dy > 34 * 34) thrust = 1; } } else ptT = 0;
+          if (Math.abs(da) < .3) { shoot = 1; if (ptT > .3 && far && !rocks.some(r => d2(r, p) < (r.r + 16) ** 2)) thrust = 1; }
+          if (!thrust && !far) brake = 1; } else ptT = 0;
         s.a += turn * 3.8 * dt; if (shoot) fire();
         if (thrust) { s.vx += Math.cos(s.a) * 135 * dt; s.vy += Math.sin(s.a) * 135 * dt; F.puff(s.x - Math.cos(s.a) * 9, s.y - Math.sin(s.a) * 9, Math.random() < .5 ? '#ff8a1e' : '#ffd23c', 0);
           if (thrT <= 0) { thrT = .11; A.beep(70 + A.rnd(0, 20), .09, 'sawtooth', .02); } }
-        const dr = A.keys.down ? 2.6 : .45, sp = Math.hypot(s.vx, s.vy), mx = 150;
+        const dr = brake ? 2.6 : .45, sp = Math.hypot(s.vx, s.vy), mx = 150;
         s.vx *= 1 - dr * dt; s.vy *= 1 - dr * dt; if (sp > mx) { s.vx *= mx / sp; s.vy *= mx / sp; }
         s.x += s.vx * dt; s.y += s.vy * dt; wrap(s); }
       bgx += s.vx * dt * .08 + dt * 2; bgy += s.vy * dt * .08;
